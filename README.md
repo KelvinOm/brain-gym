@@ -1,6 +1,6 @@
 # Focus Boost
 
-Short games that train attention and focus, for a parent and child to play together.
+Short games that train attention and focus, for kids and grown-ups.
 Works in the browser with no install. The interface is in Russian and English (switch in the top bar).
 
 **Play:** https://kelvinom.github.io/brain-gym/
@@ -8,13 +8,13 @@ Works in the browser with no install. The interface is in Russian and English (s
 ## Games
 
 - **Schulte Table / Таблица Шульте**: tap numbers in order, 3×3 to 7×7.
-- **Memory Grid / Запомни клетки**: remember which cells lit up; the grid grows from 3×3 to 7×7.
+- **Memory Grid / Запомни клетки**: remember which cells lit up. Auto mode grows the grid from 3×3 to 7×7, or pick a fixed 3×3 to 8×8 grid and set the number of cells.
 - **Sequence Memory / Запомни порядок**: repeat a growing sequence of shapes.
 - **Spot the Difference / Найди отличия**: generated picture pairs with 5 to 20 differences.
 - **Find It / Найди предмет**: find the one hidden item in a busy picture before the 60–120 s timer ends.
 - **Copy the Hands / Повтори жесты**: copy a sequence of hand signs, then tap it back.
 
-Two players each keep their own levels. Progress is saved in the browser (localStorage), so each device has its own.
+Rounds start by themselves after a 3-2-1 countdown. Progress is saved in the browser (localStorage), so each device has its own.
 
 ## Editing
 
