@@ -86,6 +86,13 @@ a.icon-btn { display: inline-grid; place-items: center; text-decoration: none; f
 .res-no { color: var(--bad); font-weight: 800; }
 .sb-empty { background: var(--surface); border-radius: 18px; padding: 24px; text-align: center; color: var(--muted); border: 2px dashed var(--line); }
 .sb-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; color: var(--muted); font-size: 14px; }
+dialog.break { border: 0; border-radius: 24px; padding: 28px 24px; width: min(440px, calc(100vw - 32px)); background: var(--surface); color: var(--ink); text-align: center; box-shadow: 0 30px 80px -20px rgba(0,0,0,.45); }
+dialog.break::backdrop { background: rgba(12, 30, 34, .6); }
+.break-emoji { font-size: 64px; line-height: 1; }
+dialog.break h2 { font-size: 30px; margin-block: 10px 8px; }
+dialog.break p { color: var(--muted); }
+dialog.break .break-stats { color: var(--ink); font-weight: 700; margin-top: 10px; }
+dialog.break .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
 .stepper { display: inline-flex; align-items: center; gap: 6px; }
 .stepper .btn { min-width: 44px; padding: 0; font-size: 22px; line-height: 1; }
 .stepper b { min-width: 2.2ch; text-align: center; font: 800 22px/1 var(--display); font-variant-numeric: tabular-nums; }
@@ -248,6 +255,7 @@ a.icon-btn { display: inline-grid; place-items: center; text-decoration: none; f
   </header>
   <main id="main"></main>
 </div>
+<dialog class="break" id="break" aria-labelledby="break-title"></dialog>
 
 <script>
 (function () {
@@ -320,6 +328,8 @@ const TXT = {
     lenN: n => `length ${n}`, lvl: n => `Level ${n}`, gridBest: n => `${n} cells`,
     sbEmpty: 'No results yet. Type your name at the top, play any game, and every round will show up here.',
     showingN: (a, b) => a === b ? `${b} ${en(b, 'round', 'rounds')}` : `Showing the first ${a} of ${b} rounds`,
+    breakTitle: m => `${m} minutes of practice!`, breakText: 'Great work! Time for a short break: stretch, look out of the window, drink some water.',
+    breakStats: (n, a) => `This session: ${n} ${en(n, 'round', 'rounds')}, accuracy ${a}.`, breakStop: 'Take a break', breakGo: 'Keep playing',
     clearAll: 'Clear scoreboard', confirmClear: n => `Delete all ${n} results? This cannot be undone.`, del: 'Delete', cancel: 'Cancel',
     back: '← All games', start: 'Start', pause: 'Pause ⏸', playAgain: 'Play again', tryAgain: 'Try again', nextRound: 'Next round', easier: 'Easier',
     best: 'Best', level: 'Level', time: 'Time', mistakes: 'Mistakes', misses: 'Misses', bestLevel: 'Best level', notYet: 'not yet',
@@ -385,6 +395,8 @@ const TXT = {
     lenN: n => `длина ${n}`, lvl: n => `Уровень ${n}`, gridBest: n => `${n} ${ru(n, 'клетка', 'клетки', 'клеток')}`,
     sbEmpty: 'Пока нет результатов. Впиши своё имя вверху, сыграй в любую игру, и каждый раунд появится здесь.',
     showingN: (a, b) => a === b ? `${b} ${ru(b, 'раунд', 'раунда', 'раундов')}` : `Показаны первые ${a} из ${b} раундов`,
+    breakTitle: m => `${m} ${ru(m, 'минута', 'минуты', 'минут')} тренировки!`, breakText: 'Отличная работа! Пора сделать перерыв: потянись, посмотри в окно, попей воды.',
+    breakStats: (n, a) => `За это время: ${n} ${ru(n, 'раунд', 'раунда', 'раундов')}, точность ${a}.`, breakStop: 'Сделать перерыв', breakGo: 'Играть дальше',
     clearAll: 'Очистить таблицу', confirmClear: n => `Удалить все результаты (${n})? Это нельзя отменить.`, del: 'Удалить', cancel: 'Отмена',
     back: '← Все игры', start: 'Старт', pause: 'Пауза ⏸', playAgain: 'Ещё раз', tryAgain: 'Попробовать ещё', nextRound: 'Следующий раунд', easier: 'Полегче',
     best: 'Рекорд', level: 'Уровень', time: 'Время', mistakes: 'Ошибки', misses: 'Промахи', bestLevel: 'Лучший уровень', notYet: 'пока нет',
@@ -532,11 +544,14 @@ function onSeg(id, fn) {
 }
 // Shows a round's result. With `auto` (seconds) the first button runs by itself after a countdown, unless paused.
 function result(ctx, title, sub, buttons, auto) {
+  const breakNow = sessionDue();
+  if (breakNow) auto = 0;
   ctx.msg.innerHTML = `<div class="result"><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}<div class="row">${
     buttons.map((b, i) => `<button class="btn${i === 0 ? ' primary' : ''}" data-i="${i}">${b[0]}</button>`).join('')}${
     auto ? `<button class="btn" data-pause>${t('pause')}</button>` : ''}</div>${
     lastSaved ? `<p class="saved">${t('savedFor', esc(lastSaved.name), pct(lastSaved.acc))}</p>` : ''}</div>`;
   lastSaved = null;
+  if (breakNow) showBreak();
   const card = ctx.msg.firstElementChild, first = card.querySelector('.btn');
   card.querySelectorAll('[data-i]').forEach(el => el.addEventListener('click', () => { ctx.msg.innerHTML = ''; buttons[+el.dataset.i][1](); }));
   first.focus({ preventScroll: true });
@@ -1094,6 +1109,41 @@ function renderHome() {
     <p class="tip">${t('tip')}</p>`;
 }
 
+/* ================= Session timer ================= */
+// Starts silently when the first game opens. At 10 minutes it waits for the round to end, then suggests a break.
+// Kept in sessionStorage so a reload in the same tab does not restart it.
+const SESSION_LIMIT = 10 * 60 * 1000, SESSION_GRACE = 2 * 60 * 1000;
+const sess = (() => { try { return JSON.parse(sessionStorage.getItem('focusboost.session')) || {}; } catch (e) { return {}; } })();
+function saveSess() { try { sessionStorage.setItem('focusboost.session', JSON.stringify(sess)); } catch (e) {} }
+function startSession() { if (!sess.start) { sess.start = Date.now(); sess.shown = false; saveSess(); } }
+const sessionDue = () => !!sess.start && !sess.shown && Date.now() - sess.start >= SESSION_LIMIT;
+function checkBreak() {
+  if (!sessionDue()) return;
+  const inGame = GAMES[location.hash.slice(1)];
+  if (!inGame || document.querySelector('.result') || Date.now() - sess.start >= SESSION_LIMIT + SESSION_GRACE) showBreak();
+}
+setInterval(checkBreak, 3000); // not in `timers`: it must survive leaving a game
+function showBreak() {
+  const d = $('#break');
+  if (d.open) return;
+  sess.shown = true; saveSess();
+  const mins = Math.max(1, Math.floor((Date.now() - sess.start) / 60000));
+  const rs = (data.scores || []).filter(r => r.ts >= sess.start);
+  const acc = rs.length ? rs.reduce((a, r) => a + r.acc, 0) / rs.length : 0;
+  d.innerHTML = `<div class="break-emoji" aria-hidden="true">⏰</div><h2 id="break-title">${t('breakTitle', mins)}</h2><p>${t('breakText')}</p>${
+    rs.length ? `<p class="break-stats">${t('breakStats', rs.length, pct(acc))}</p>` : ''}
+    <div class="row"><button class="btn primary" id="break-stop">${t('breakStop')}</button><button class="btn" id="break-go">${t('breakGo')}</button></div>`;
+  $('#break-stop').addEventListener('click', () => {
+    // A real break: the next game starts a fresh 10 minutes.
+    sess.start = null; sess.shown = false; saveSess();
+    d.close(); location.hash = '';
+  });
+  $('#break-go').addEventListener('click', () => d.close());
+  try { d.showModal(); } catch (e) { d.setAttribute('open', ''); }
+  $('#break-stop').focus();
+  fanfare();
+}
+
 /* ================= Scoreboard page ================= */
 const pct = a => Math.round(a * 100) + '%';
 function dur(ms) {
@@ -1181,7 +1231,7 @@ function route() {
   teardown();
   const key = location.hash.slice(1), g = GAMES[key];
   if (key === 'scores') { sb.confirm = false; renderScores(); document.title = t('scoresTitle') + ' · Focus Boost'; }
-  else if (g) { const ctx = shell(g); g.play(ctx); document.title = t(g.id + 'Title') + ' · Focus Boost'; }
+  else if (g) { startSession(); const ctx = shell(g); g.play(ctx); document.title = t(g.id + 'Title') + ' · Focus Boost'; }
   else { renderHome(); document.title = 'Focus Boost'; }
 }
 window.addEventListener('hashchange', () => { route(); window.scrollTo(0, 0); });
