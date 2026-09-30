@@ -219,8 +219,16 @@ a { color: var(--accent); }
 .field > span.shake { animation: shake .35s; }
 .field > span.win { z-index: 2; outline: 4px solid var(--good); outline-offset: 4px; border-radius: 50%; }
 .field > span.reveal { z-index: 2; outline: 4px dashed var(--bad); outline-offset: 4px; border-radius: 50%; }
-.field .cover { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; color: var(--muted); font-weight: 600; }
+.field .cover { position: absolute; inset: 0; display: grid; place-items: start center; text-align: center; padding: 8% 16px 16px; color: var(--ink); font-weight: 700; font-size: 20px; }
 @keyframes shake { 0%,100% { transform: translate(-50%,-50%) rotate(var(--r,0deg)); } 25% { transform: translate(-58%,-50%) rotate(var(--r,0deg)); } 75% { transform: translate(-42%,-50%) rotate(var(--r,0deg)); } }
+
+.count {
+  position: absolute; inset: 0; z-index: 3; display: grid; place-items: center; pointer-events: none; border-radius: inherit;
+  font: 800 clamp(64px, 16vw, 140px)/1 var(--display); color: var(--accent);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+}
+.count span { display: block; animation: tick .6s ease-out; }
+@keyframes tick { from { transform: scale(1.5); opacity: 0; } 30% { opacity: 1; } to { transform: scale(1); opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
@@ -292,7 +300,7 @@ const TXT = {
     today: (name, n) => `${name} today: <b>${n}</b> ${en(n, 'round', 'rounds')}`,
     editPlayers: 'Edit players', sound: 'Sound', langName: 'Language',
     playerName: k => `Player ${k} name`, avatar: 'Avatar', done: 'Done',
-    back: '← All games', start: 'Start', playAgain: 'Play again', tryAgain: 'Try again', nextRound: 'Next round', easier: 'Easier',
+    back: '← All games', start: 'Start', pause: 'Pause ⏸', playAgain: 'Play again', tryAgain: 'Try again', nextRound: 'Next round', easier: 'Easier',
     best: 'Best', level: 'Level', time: 'Time', mistakes: 'Mistakes', misses: 'Misses', bestLevel: 'Best level', notYet: 'not yet',
     secs: ms => (ms / 1000).toFixed(1) + 's', sec: n => n + 's',
     heroTitle: 'Short games for a sharper focus',
@@ -309,7 +317,7 @@ const TXT = {
     gridTitle: 'Memory Grid', gridSkill: 'Visual memory',
     gridBlurb: 'Some squares light up for a few seconds. Remember where they were and tap the same squares.',
     gridHow: 'Watch which squares light up. When they go dark, tap the same squares. Get them all right and the grid grows.',
-    lookTime: 'Look time', grid: 'Grid', cells: 'Cells', pressStart: 'Press Start', getReady: 'Get ready…', remember: 'Remember!',
+    lookTime: 'Look time', grid: 'Grid', cells: 'Cells', pressStart: 'Get ready…', getReady: 'Get ready…', remember: 'Remember!',
     tapCells: (c, k) => `Tap ${c} cells · ${k}/${c}`, cellN: i => 'Cell ' + i,
     gridRec: (s, c) => `${s}×${s}, ${c} cells`,
     perfect: 'Perfect! ⭐', gridGrows: s => `Level up! The grid grows to ${s}×${s}.`, gridMore: c => `Level up! Next time: ${c} cells.`,
@@ -344,9 +352,9 @@ const TXT = {
     // Search
     searchTitle: 'Find It', searchSkill: 'Selective attention',
     searchBlurb: 'A busy picture full of animals, fruit and toys. Find the one thing you are looking for before time runs out.',
-    searchHow: 'Look at the item in the yellow card, press Start, and find its only copy in the busy picture before the timer runs out. Look-alikes will try to trick you.',
+    searchHow: 'Remember the item in the yellow card. After the countdown, find its only copy in the busy picture before the timer runs out. Look-alikes will try to trick you.',
     newField: 'New field', timeLeft: 'Time left', items: 'Items', itemsN: n => `${n} items`,
-    findThis: 'Find this one!', exactlyOne: 'There is exactly one hidden in the picture.', lookClosely: 'Look closely at the one you need to find.',
+    findThis: 'Find this one!', exactlyOne: 'There is exactly one hidden in the picture.', lookClosely: 'Remember what you need to find!',
     foundIt: 'Found it! 🔎', tookS: s => `It took ${s}s. Next level has more to search through.`, nextLevel: 'Next level',
     timesUp: "Time's up", redCircle: 'The red circle shows where it was hiding.', tryAnother: 'Try another'
   },
@@ -355,7 +363,7 @@ const TXT = {
     today: (name, n) => `${name} сегодня: <b>${n}</b> ${ru(n, 'раунд', 'раунда', 'раундов')}`,
     editPlayers: 'Изменить игроков', sound: 'Звук', langName: 'Язык',
     playerName: k => `Имя игрока ${k}`, avatar: 'Аватар', done: 'Готово',
-    back: '← Все игры', start: 'Старт', playAgain: 'Ещё раз', tryAgain: 'Попробовать ещё', nextRound: 'Следующий раунд', easier: 'Полегче',
+    back: '← Все игры', start: 'Старт', pause: 'Пауза ⏸', playAgain: 'Ещё раз', tryAgain: 'Попробовать ещё', nextRound: 'Следующий раунд', easier: 'Полегче',
     best: 'Рекорд', level: 'Уровень', time: 'Время', mistakes: 'Ошибки', misses: 'Промахи', bestLevel: 'Лучший уровень', notYet: 'пока нет',
     secs: ms => (ms / 1000).toFixed(1).replace('.', ',') + ' с', sec: n => n + ' с',
     heroTitle: 'Короткие игры для внимания',
@@ -370,7 +378,7 @@ const TXT = {
     gridTitle: 'Запомни клетки', gridSkill: 'Зрительная память',
     gridBlurb: 'Несколько клеток загораются на пару секунд. Запомни, где они были, и нажми на те же клетки.',
     gridHow: 'Смотри, какие клетки загорятся. Когда они погаснут, нажми на те же клетки. Если всё верно, сетка становится больше.',
-    lookTime: 'Время показа', grid: 'Сетка', cells: 'Клетки', pressStart: 'Нажми «Старт»', getReady: 'Приготовься…', remember: 'Запоминай!',
+    lookTime: 'Время показа', grid: 'Сетка', cells: 'Клетки', pressStart: 'Приготовься…', getReady: 'Приготовься…', remember: 'Запоминай!',
     tapCells: (c, k) => `Нажми ${c} ${ru(c, 'клетку', 'клетки', 'клеток')} · ${k}/${c}`, cellN: i => 'Клетка ' + i,
     gridRec: (s, c) => `${s}×${s}, ${c} ${ru(c, 'клетка', 'клетки', 'клеток')}`,
     perfect: 'Отлично! ⭐', gridGrows: s => `Новый уровень! Сетка становится ${s}×${s}.`, gridMore: c => `Новый уровень! Дальше: ${c} ${ru(c, 'клетка', 'клетки', 'клеток')}.`,
@@ -402,9 +410,9 @@ const TXT = {
     spotStay: ' Чтобы перейти на новый уровень, найди всё без подсказок и максимум с 3 промахами.',
     searchTitle: 'Найди предмет', searchSkill: 'Избирательное внимание',
     searchBlurb: 'Пёстрая картинка со зверями, фруктами и игрушками. Найди нужный предмет, пока не вышло время.',
-    searchHow: 'Посмотри на предмет в жёлтой карточке, нажми «Старт» и найди его на картинке, пока не вышло время. Он там ровно один. Похожие предметы будут тебя путать.',
+    searchHow: 'Запомни предмет в жёлтой карточке. После отсчёта найди его на картинке, пока не вышло время. Он там ровно один. Похожие предметы будут тебя путать.',
     newField: 'Новое поле', timeLeft: 'Осталось', items: 'Предметы', itemsN: n => `${n} ${ru(n, 'предмет', 'предмета', 'предметов')}`,
-    findThis: 'Найди вот это!', exactlyOne: 'На картинке он спрятан ровно один раз.', lookClosely: 'Хорошо запомни, что нужно найти.',
+    findThis: 'Найди вот это!', exactlyOne: 'На картинке он спрятан ровно один раз.', lookClosely: 'Запомни, что нужно найти!',
     foundIt: 'Найдено! 🔎', tookS: s => `Понадобилось ${s} с. На следующем уровне предметов больше.`, nextLevel: 'Следующий уровень',
     timesUp: 'Время вышло', redCircle: 'Красный круг показывает, где он прятался.', tryAnother: 'Другое поле'
   }
@@ -524,12 +532,37 @@ function onSeg(id, fn) {
     fn(b.dataset.v);
   });
 }
-function result(ctx, title, sub, buttons) {
+// Shows a round's result. With `auto` (seconds) the first button runs by itself after a countdown, unless paused.
+function result(ctx, title, sub, buttons, auto) {
   ctx.msg.innerHTML = `<div class="result"><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}<div class="row">${
-    buttons.map((b, i) => `<button class="btn${i === 0 ? ' primary' : ''}" data-i="${i}">${b[0]}</button>`).join('')}</div></div>`;
-  ctx.msg.querySelectorAll('[data-i]').forEach(el => el.addEventListener('click', () => { ctx.msg.innerHTML = ''; buttons[+el.dataset.i][1](); }));
-  const first = ctx.msg.querySelector('.btn'); if (first) first.focus({ preventScroll: true });
+    buttons.map((b, i) => `<button class="btn${i === 0 ? ' primary' : ''}" data-i="${i}">${b[0]}</button>`).join('')}${
+    auto ? `<button class="btn" data-pause>${t('pause')}</button>` : ''}</div></div>`;
+  const card = ctx.msg.firstElementChild, first = card.querySelector('.btn');
+  card.querySelectorAll('[data-i]').forEach(el => el.addEventListener('click', () => { ctx.msg.innerHTML = ''; buttons[+el.dataset.i][1](); }));
+  first.focus({ preventScroll: true });
   ctx.msg.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  if (!auto) return;
+  let left = auto, paused = false;
+  const step = () => {
+    if (paused || !card.isConnected) return;
+    if (left <= 0) { ctx.msg.innerHTML = ''; buttons[0][1](); return; }
+    first.textContent = `${buttons[0][0]} · ${left}`; left--; later(step, 1000);
+  };
+  card.querySelector('[data-pause]').addEventListener('click', e => { paused = true; first.textContent = buttons[0][0]; e.currentTarget.remove(); first.focus(); });
+  step();
+}
+// Big 3-2-1 over `host`, then `fn`. Stops quietly if the round is replaced or the game is left.
+function countdown(host, fn, from = 3, ms = 600) {
+  const me = run, el = document.createElement('div');
+  el.className = 'count'; host.appendChild(el);
+  let n = from;
+  const step = () => {
+    if (me !== run || !el.isConnected) return;
+    if (n === 0) { el.remove(); fn(); return; }
+    el.innerHTML = `<span>${n}</span>`;
+    beep(n === 1 ? 660 : 440, .08); n--; later(step, ms);
+  };
+  step();
 }
 
 /* ================= 1. Schulte table ================= */
@@ -553,16 +586,14 @@ function schulte(ctx) {
     playing = false; mistakes = 0; ctx.msg.innerHTML = '';
     bar();
     const nums = Array.from({ length: n * n }, (_, i) => i + 1);
-    ctx.stage.innerHTML = `<div class="board cover${dot ? ' dot' : ''}" id="sch-board" style="--n:${n};grid-template-columns:repeat(${n},1fr)">${nums.map(k => `<button data-k="${k}">${k}</button>`).join('')}</div>
-      <button class="btn primary" id="sch-go">${t('start')}</button>`;
-    $('#sch-go').addEventListener('click', begin);
+    ctx.stage.innerHTML = `<div class="board cover${dot ? ' dot' : ''}" id="sch-board" style="--n:${n};grid-template-columns:repeat(${n},1fr)">${nums.map(k => `<button data-k="${k}">${k}</button>`).join('')}</div>`;
+    countdown($('#sch-board'), begin);
   }
   function begin() {
     const nums = shuffle(Array.from({ length: n * n }, (_, i) => i + 1));
     const board = $('#sch-board');
     board.classList.remove('cover');
     board.innerHTML = nums.map(k => `<button data-k="${k}" aria-label="${k}">${k}</button>`).join('');
-    $('#sch-go').remove();
     next = 1; mistakes = 0; playing = true; t0 = performance.now(); bar();
     board.scrollIntoView({ block: 'end', behavior: 'smooth' });
     tick = every(() => { const el = $('#sch-time'); if (el) el.textContent = secs(performance.now() - t0); }, 100);
@@ -592,7 +623,7 @@ function schulte(ctx) {
     save(); logRound(); fanfare();
     result(ctx, record ? t('newBest') : t('doneIn', secs(ms)),
       t('schSummary', n, secs(ms), mistakes) + (prev && !record ? t('yourBest', secs(prev)) : ''),
-      [[t('playAgain'), ready]]);
+      [[t('playAgain'), ready]], 4);
   }
   ready();
 }
@@ -617,19 +648,16 @@ function memoryGrid(ctx) {
     run++; myRun = run; ctx.msg.innerHTML = '';
     [size, count] = gridLevel(L); phase = 'idle'; bar(t('pressStart'));
     ctx.stage.innerHTML = `<div class="timebar"><i id="g-time" style="transform:scaleX(1)"></i></div>
-      <div class="board locked" id="g-board" style="--n:${size};grid-template-columns:repeat(${size},1fr)">${Array.from({ length: size * size }, (_, i) => `<button data-i="${i}" aria-label="${t('cellN', i + 1)}"></button>`).join('')}</div>
-      <button class="btn primary" id="g-go">${t('start')}</button>`;
-    $('#g-go').addEventListener('click', show);
+      <div class="board locked" id="g-board" style="--n:${size};grid-template-columns:repeat(${size},1fr)">${Array.from({ length: size * size }, (_, i) => `<button data-i="${i}" aria-label="${t('cellN', i + 1)}"></button>`).join('')}</div>`;
     $('#g-board').addEventListener('pointerdown', onTap);
+    countdown($('#g-board'), show);
   }
   async function show() {
     const me = myRun;
-    $('#g-go').remove();
     $('#g-board').scrollIntoView({ block: 'end', behavior: 'smooth' });
     targets = new Set(shuffle(Array.from({ length: size * size }, (_, i) => i)).slice(0, count));
-    picked = new Set(); phase = 'wait';
-    $('#g-state').textContent = t('getReady');
-    await wait(700); if (me !== run) return;
+    picked = new Set();
+    await wait(150); if (me !== run) return;
     phase = 'show'; $('#g-state').textContent = t('remember');
     cells().forEach((c, i) => c.classList.toggle('lit', targets.has(i)));
     const tb = $('#g-time');
@@ -664,13 +692,13 @@ function memoryGrid(ctx) {
     if (hits === count) {
       fanfare(); fails = 0; L++; st.level = L; st.best = Math.max(st.best || 1, L); save();
       const [ns, nc] = gridLevel(L);
-      result(ctx, t('perfect'), ns > size ? t('gridGrows', ns) : t('gridMore', nc), [[t('nextRound'), ready]]);
+      result(ctx, t('perfect'), ns > size ? t('gridGrows', ns) : t('gridMore', nc), [[t('nextRound'), ready]], 3);
     } else {
       bad(); fails++;
       let note = t('gridGot', hits, count);
       if (fails >= 2 && L > 1) { L--; fails = 0; note += t('goingEasier'); }
       st.level = L; save();
-      result(ctx, hits >= count - 1 ? t('soClose') : t('keepGoing'), note, [[t('tryAgain'), ready]]);
+      result(ctx, hits >= count - 1 ? t('soClose') : t('keepGoing'), note, [[t('tryAgain'), ready]], 5);
     }
   }
   ready();
@@ -696,19 +724,17 @@ function sequence(ctx, skinKey) {
     const cols = nItems <= 4 ? 4 : nItems === 6 ? 3 : 4, names = t(skin.names);
     ctx.stage.innerHTML = `<div class="seq-window" id="s-win"><span class="ghost">${t(skin.intro)}</span></div>
       <div class="entered" id="s-entered"></div>
-      <div class="pads" style="--cols:${cols}">${skin.items.slice(0, nItems).map((it, i) => `<button class="pad" data-i="${i}" aria-label="${names[i]}" disabled>${it}</button>`).join('')}</div>
-      <button class="btn primary" id="s-go">${t('start')}</button>`;
-    $('#s-go').addEventListener('click', play);
+      <div class="pads" style="--cols:${cols}">${skin.items.slice(0, nItems).map((it, i) => `<button class="pad" data-i="${i}" aria-label="${names[i]}" disabled>${it}</button>`).join('')}</div>`;
     ctx.stage.querySelector('.pads').addEventListener('pointerdown', onTap);
+    countdown($('#s-win'), play);
   }
   const pads = () => [...ctx.stage.querySelectorAll('.pad')];
   async function play() {
     const me = run;
-    $('#s-go').remove();
     seq = []; for (let i = 0; i < len; i++) { let x; do { x = rnd(nItems); } while (i && x === seq[i - 1]); seq.push(x); }
     phase = 'watch'; $('#s-state').textContent = t('watch');
     const win = $('#s-win'); win.innerHTML = '';
-    await wait(600); if (me !== run) return;
+    await wait(300); if (me !== run) return;
     for (let i = 0; i < seq.length; i++) {
       const k = seq[i], pad = pads()[k];
       win.innerHTML = `<span class="pop">${skin.items[k]}</span>`;
@@ -741,13 +767,13 @@ function sequence(ctx, skinKey) {
   function winRound() {
     end(); fanfare(); fails = 0;
     const done = len; len++; st.len = len; st.best = Math.max(st.best || 0, done); save();
-    result(ctx, t('inARowWin', done), t('nextHas', len), [[t('nextRound'), ready]]);
+    result(ctx, t('inARowWin', done), t('nextHas', len), [[t('nextRound'), ready]], 3);
   }
   function lose() {
     end(); bad(); fails++;
     if (fails >= 2 && len > 2) { len--; fails = 0; st.len = len; save(); }
     const ans = `<span class="answer">${seq.map(k => skin.items[k]).join('<span aria-hidden="true">→</span>')}</span>`;
-    result(ctx, t('oops'), `${t('seqWas')}<br>${ans}`, [[t('tryAgain'), ready]]);
+    result(ctx, t('oops'), `${t('seqWas')}<br>${ans}`, [[t('tryAgain'), ready]], 5);
   }
   ready();
 }
@@ -913,7 +939,7 @@ function spot(ctx) {
     save();
     result(ctx, t('allFound'), t('spotSummary', sc.diffs.length, s, mistakes, hints) +
       (up ? t('spotUp', SPOT_LEVELS[Math.min(L, SPOT_LEVELS.length) - 1][2]) : t('spotStay')),
-      [[up ? t('nextPicture') : t('newPicture'), ready]]);
+      [[up ? t('nextPicture') : t('newPicture'), ready]], 5);
   }
   ready();
 }
@@ -955,9 +981,9 @@ function search(ctx) {
     });
     bar();
     ctx.stage.innerHTML = `<div class="target-card"><span class="t">${target}</span><span>${t('findThis')}<br><small>${t('exactlyOne')}</small></span></div>
-      <div class="field hide" id="w-field">${items.join('')}<div class="cover" id="w-cover"><div><p>${t('lookClosely')}</p><br><button class="btn primary" id="w-go">${t('start')}</button></div></div></div>`;
-    $('#w-go').addEventListener('click', begin);
+      <div class="field hide" id="w-field">${items.join('')}<div class="cover" id="w-cover"><p>${t('lookClosely')}</p></div></div>`;
     $('#w-field').addEventListener('pointerdown', onTap);
+    countdown($('#w-field'), begin, 3, 900);
   }
   function begin() {
     $('#w-cover').remove(); $('#w-field').classList.remove('hide');
@@ -976,7 +1002,7 @@ function search(ctx) {
       playing = false; stop(tick); s.classList.add('win'); fanfare(); logRound();
       const used = Math.round(cfg.time - (tEnd - performance.now()) / 1000);
       L++; st.level = L; st.best = Math.max(st.best || 1, L); save();
-      result(ctx, t('foundIt'), t('tookS', used), [[t('nextLevel'), ready]]);
+      result(ctx, t('foundIt'), t('tookS', used), [[t('nextLevel'), ready]], 3);
     } else {
       mistakes++; $('#w-miss').textContent = mistakes; bad();
       s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake');
@@ -986,7 +1012,7 @@ function search(ctx) {
     playing = false; stop(tick); bad(); logRound();
     const s = $(`#w-field span[data-i="${targetIdx}"]`); if (s) s.classList.add('reveal');
     if (L > 1) { L--; st.level = L; save(); }
-    result(ctx, t('timesUp'), t('redCircle'), [[t('tryAnother'), ready]]);
+    result(ctx, t('timesUp'), t('redCircle'), [[t('tryAnother'), ready]], 5);
   }
   ready();
 }
