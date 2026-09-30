@@ -100,6 +100,50 @@ dialog.break h2 { font-size: 30px; margin-block: 10px 8px; }
 dialog.break p { color: var(--muted); }
 dialog.break .break-stats { color: var(--ink); font-weight: 700; margin-top: 10px; }
 dialog.break .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+.rule { font-weight: 700; text-align: center; max-width: 40ch; }
+.probe {
+  width: min(100%, 560px); height: 210px; border-radius: 22px; position: relative; overflow: hidden;
+  /* fixed light panel so stimulus colours read the same in both themes */
+  background: #F3F6F5; color: #12343B; border: 4px solid transparent; box-shadow: var(--shadow);
+  display: grid; place-items: center; transition: border-color .1s ease;
+}
+.probe.ok { border-color: var(--good); }
+.probe.bad { border-color: var(--bad); }
+.probe .stim.gone { visibility: hidden; }
+.stroop { font: 800 clamp(36px, 10vw, 72px)/1 var(--display); letter-spacing: .02em; }
+.flank { font: 700 clamp(34px, 9.5vw, 72px)/1 system-ui, sans-serif; letter-spacing: .06em; white-space: nowrap; }
+.digit { font-family: var(--display); font-weight: 800; line-height: 1; }
+.digit.d1 { font-size: 64px; } .digit.d2 { font-size: 96px; } .digit.d3 { font-size: 132px; }
+.nb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; width: 174px; height: 174px; }
+.nb-grid i { background: #FFFFFF; border-radius: 10px; display: block; overflow: hidden; }
+.nb-grid b { display: block; width: 100%; height: 100%; background: #F2B705; }
+.answers { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 10px; width: min(100%, 560px); }
+.ans {
+  position: relative; min-height: 76px; border-radius: 18px; border: 3px solid var(--line); background: var(--surface);
+  font: 800 32px/1 system-ui, sans-serif; display: grid; place-items: center; padding: 8px; touch-action: manipulation;
+  transition: border-color .1s ease;
+}
+.ans.go { min-height: 120px; font: 800 30px/1 var(--display); background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.ans .sw { width: 46px; height: 46px; border-radius: 50%; display: block; }
+.ans kbd { position: absolute; top: 6px; right: 9px; font: 700 11px/1 var(--body); color: var(--muted); }
+.ans.flash-ok { border-color: var(--good); }
+.ans.flash-bad { border-color: var(--bad); }
+.bd-grid {
+  width: min(100%, 720px); display: grid; grid-template-columns: repeat(var(--cols), 1fr); position: relative;
+  container-type: inline-size; background: var(--surface); border-radius: 16px; padding: 8px; box-shadow: var(--shadow);
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+}
+.bd-grid > span { font: 700 calc(58cqw / var(--cols))/1.4 var(--body); text-align: center; cursor: pointer; border-radius: 6px; color: var(--ink); }
+.bd-grid.cover > span { color: transparent; }
+.bd-grid > span.hit { background: var(--good); color: #FFFFFF; text-decoration: line-through; }
+.bd-grid > span.bad { background: var(--bad); color: #FFFFFF; }
+.bd-grid > span.missed { box-shadow: inset 0 0 0 3px var(--bad); }
+.pv-stroop { font: 800 30px/1 var(--display); letter-spacing: .02em; }
+.pv-flank { font: 700 38px/1 system-ui, sans-serif; letter-spacing: .06em; color: var(--ink); }
+.pv-digits { font: 800 34px/1 var(--display); letter-spacing: .12em; color: var(--ink); }
+.pv-digits s { color: var(--bad); }
+.pv-letters { font: 700 26px/1 var(--body); letter-spacing: .14em; color: var(--muted); }
+.pv-letters b { color: var(--accent); text-decoration: underline; }
 .stepper { display: inline-flex; align-items: center; gap: 6px; }
 .stepper .btn { min-width: 44px; padding: 0; font-size: 22px; line-height: 1; }
 .stepper b { min-width: 2.2ch; text-align: center; font: 800 22px/1 var(--display); font-variant-numeric: tabular-nums; }
@@ -335,6 +379,31 @@ const TXT = {
     lenN: n => `length ${n}`, lvl: n => `Level ${n}`, gridBest: n => `${n} cells`,
     sbEmpty: 'No results yet. Type your name at the top, play any game, and every round will show up here.',
     showingN: (a, b) => a === b ? `${b} ${en(b, 'round', 'rounds')}` : `Showing the first ${a} of ${b} rounds`,
+    stroopTitle: 'Colour, Not Word', stroopSkill: 'Inhibitory control',
+    stroopBlurb: 'A colour name is printed in a different colour. Tap the ink colour and ignore what the word says.',
+    flankerTitle: 'Middle Arrow', flankerSkill: 'Filtering distractions',
+    flankerBlurb: 'A row of arrows flashes up. Only the middle one counts: tap its direction, even when the others point the other way.',
+    gonogoTitle: 'Stop Digit', gonogoSkill: 'Sustained attention',
+    gonogoBlurb: 'Digits flash one after another. Tap for every digit except one. Staying alert through a long, dull stream is the exercise.',
+    nbackTitle: 'N-Back', nbackSkill: 'Working memory',
+    nbackBlurb: 'A square jumps around a 3×3 grid. Tap “Match” when it lands where it was N steps ago. Starts at 2 steps.',
+    bourdonTitle: 'Letter Cancellation', bourdonSkill: 'Concentration',
+    bourdonBlurb: 'The classic Bourdon test: rows of look-alike letters. Find and tap every target letter before time runs out.',
+    trial: 'Trial', tap: 'Tap', match: 'Match', dontTap: "Don't tap", doneBtn: 'Done', findLetters: 'Find',
+    stroopRule: 'Tap the colour of the letters, not the word. Keys 1–5 work too.',
+    flankerRule: 'Which way does the middle arrow point? Ignore the others. Arrow keys work too.',
+    sartRule: d => `Tap for every digit except ${d}. The space bar works too.`,
+    nbackRule: n => `Tap “Match” when the square is in the same place as ${n} steps ago. The space bar works too.`,
+    bourdonRule: ts => `Tap every ${ts.join(' and every ')}. Press “Done” when you have checked every row.`,
+    ink_red: 'red', ink_blue: 'blue', ink_green: 'green', ink_yellow: 'yellow', ink_purple: 'purple',
+    word_red: 'RED', word_blue: 'BLUE', word_green: 'GREEN', word_yellow: 'YELLOW', word_purple: 'PURPLE',
+    dir_left: 'left', dir_right: 'right', dir_up: 'up', dir_down: 'down',
+    trialSum: (a, rt) => `Accuracy ${a}. Average response time: ${rt}.`,
+    sartSum: (c, o) => ` Taps on the stop digit: ${c}. Missed digits: ${o}.`,
+    nbackSum: (h, n, fa) => ` Matches caught: ${h} of ${n}. Extra taps: ${fa}.`,
+    bourdonSum: (f, n, w) => `Found ${f} of ${n}. Wrong taps: ${w}.`,
+    great: 'Excellent! ⭐', goodTry: 'Good!', levelUp: ' Level up.', levelDown: ' Going one level easier.',
+    noInput: 'Round skipped', noInputSub: 'There were no taps, so nothing was saved. Start again when you are ready.',
     breakTitle: m => `${m} minutes of practice!`, breakText: 'Great work! Time for a short break: stretch, look out of the window, drink some water.',
     breakStats: (n, a) => `This session: ${n} ${en(n, 'round', 'rounds')}, accuracy ${a}.`, breakStop: 'Take a break', breakGo: 'Keep playing',
     clearAll: 'Clear scoreboard', confirmClear: n => `Delete all ${n} results? This cannot be undone.`, del: 'Delete', cancel: 'Cancel',
@@ -377,7 +446,7 @@ const TXT = {
     handsBlurb: 'Hand signs appear in a row. Make each one with your own hand, then tap them back in order.',
     // Spot
     spotTitle: 'Spot the Difference', spotSkill: 'Sustained attention',
-    spotBlurb: 'Two pictures that look the same, but they are not. Find every change, from 5 easy ones up to 20 tiny ones.',
+    spotBlurb: 'Two pictures that look the same, but they are not. Find every change: 8 to start, up to 20 in a crowded picture.',
     hint: 'Hint 💡', showAnswers: 'Show answers', newPicture: 'New picture', nextPicture: 'Next picture', found: 'Found',
     picA: 'Picture A', picB: 'Picture B', diffs: n => `${n} ${en(n, 'difference', 'differences')}`,
     foundOf: (f, n) => `You found ${f} of ${n}`, dashedRest: 'The dashed circles show the rest.',
@@ -402,6 +471,31 @@ const TXT = {
     lenN: n => `длина ${n}`, lvl: n => `Уровень ${n}`, gridBest: n => `${n} ${ru(n, 'клетка', 'клетки', 'клеток')}`,
     sbEmpty: 'Пока нет результатов. Впиши своё имя вверху, сыграй в любую игру, и каждый раунд появится здесь.',
     showingN: (a, b) => a === b ? `${b} ${ru(b, 'раунд', 'раунда', 'раундов')}` : `Показаны первые ${a} из ${b} раундов`,
+    stroopTitle: 'Цвет, а не слово', stroopSkill: 'Контроль внимания',
+    stroopBlurb: 'Название цвета написано другим цветом. Нажимай цвет букв и не обращай внимания на само слово.',
+    flankerTitle: 'Средняя стрелка', flankerSkill: 'Отсеивание помех',
+    flankerBlurb: 'Появляется ряд стрелок. Считается только средняя: нажми, куда она смотрит, даже если остальные смотрят в другую сторону.',
+    gonogoTitle: 'Стоп-цифра', gonogoSkill: 'Устойчивость внимания',
+    gonogoBlurb: 'Цифры быстро сменяют друг друга. Жми на каждую, кроме одной. Смысл в том, чтобы не отвлечься на длинной однообразной серии.',
+    nbackTitle: 'N-назад', nbackSkill: 'Рабочая память',
+    nbackBlurb: 'Квадрат прыгает по сетке 3×3. Жми «Совпало», когда он там же, где был N шагов назад. Начинаем с 2 шагов.',
+    bourdonTitle: 'Корректурная проба', bourdonSkill: 'Концентрация',
+    bourdonBlurb: 'Классический тест Бурдона: строки похожих букв. Найди и отметь все нужные буквы, пока не вышло время.',
+    trial: 'Проба', tap: 'Жми', match: 'Совпало', dontTap: 'Не жми', doneBtn: 'Готово', findLetters: 'Ищи',
+    stroopRule: 'Нажимай цвет букв, а не то, что написано. Можно клавишами 1–5.',
+    flankerRule: 'Куда смотрит средняя стрелка? Остальные не в счёт. Можно стрелками на клавиатуре.',
+    sartRule: d => `Жми на каждую цифру, кроме ${d}. Можно пробелом.`,
+    nbackRule: n => `Жми «Совпало», если квадрат там же, где ${n} ${ru(n, 'шаг', 'шага', 'шагов')} назад. Можно пробелом.`,
+    bourdonRule: ts => `Отметь все буквы ${ts.join(' и ')}. Когда проверишь все строки, нажми «Готово».`,
+    ink_red: 'красный', ink_blue: 'синий', ink_green: 'зелёный', ink_yellow: 'жёлтый', ink_purple: 'фиолетовый',
+    word_red: 'КРАСНЫЙ', word_blue: 'СИНИЙ', word_green: 'ЗЕЛЁНЫЙ', word_yellow: 'ЖЁЛТЫЙ', word_purple: 'ФИОЛЕТОВЫЙ',
+    dir_left: 'влево', dir_right: 'вправо', dir_up: 'вверх', dir_down: 'вниз',
+    trialSum: (a, rt) => `Точность ${a}. Среднее время ответа: ${rt}.`,
+    sartSum: (c, o) => ` Нажатий на стоп-цифру: ${c}. Пропущено цифр: ${o}.`,
+    nbackSum: (h, n, fa) => ` Совпадений поймано: ${h} из ${n}. Лишних нажатий: ${fa}.`,
+    bourdonSum: (f, n, w) => `Найдено ${f} из ${n}. Лишних нажатий: ${w}.`,
+    great: 'Отлично! ⭐', goodTry: 'Хорошо!', levelUp: ' Уровень повышен.', levelDown: ' Уровень стал чуть легче.',
+    noInput: 'Раунд пропущен', noInputSub: 'Не было ни одного нажатия, поэтому ничего не сохранено. Начни снова, когда захочешь.',
     breakTitle: m => `${m} ${ru(m, 'минута', 'минуты', 'минут')} тренировки!`, breakText: 'Отличная работа! Пора сделать перерыв: потянись, посмотри в окно, попей воды.',
     breakStats: (n, a) => `За это время: ${n} ${ru(n, 'раунд', 'раунда', 'раундов')}, точность ${a}.`, breakStop: 'Сделать перерыв', breakGo: 'Играть дальше',
     clearAll: 'Очистить таблицу', confirmClear: n => `Удалить все результаты (${n})? Это нельзя отменить.`, del: 'Удалить', cancel: 'Отмена',
@@ -439,7 +533,7 @@ const TXT = {
     handsTitle: 'Повтори жесты', handsSkill: 'Бонус · тело и память',
     handsBlurb: 'Жесты появляются по очереди. Покажи каждый своей рукой, потом нажми их в том же порядке.',
     spotTitle: 'Найди отличия', spotSkill: 'Устойчивое внимание',
-    spotBlurb: 'Две картинки кажутся одинаковыми, но это не так. Найди все отличия: от 5 простых до 20 крошечных.',
+    spotBlurb: 'Две картинки кажутся одинаковыми, но это не так. Найди все отличия: сначала 8, потом до 20 на плотной картинке.',
     hint: 'Подсказка 💡', showAnswers: 'Показать ответы', newPicture: 'Новая картинка', nextPicture: 'Следующая картинка', found: 'Найдено',
     picA: 'Картинка А', picB: 'Картинка Б', diffs: n => `${n} ${ru(n, 'отличие', 'отличия', 'отличий')}`,
     foundOf: (f, n) => `Найдено ${f} из ${n}`, dashedRest: 'Пунктирные круги показывают остальные.',
@@ -475,7 +569,14 @@ let run = 0;
 function later(fn, ms) { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; }
 function every(fn, ms) { const id = setInterval(fn, ms); timers.add(id); return id; }
 function stop(id) { clearTimeout(id); clearInterval(id); timers.delete(id); }
-function teardown() { timers.forEach(id => { clearTimeout(id); clearInterval(id); }); timers.clear(); run++; }
+function teardown() { timers.forEach(id => { clearTimeout(id); clearInterval(id); }); timers.clear(); cleanups.splice(0).forEach(f => f()); run++; }
+// Keyboard shortcuts for the current game; removed on teardown. Ignored while typing or while the break dialog is open.
+const cleanups = [];
+function onKey(fn) {
+  const h = e => { if (e.target.closest && e.target.closest('input, select, textarea')) return; if ($('#break').open) return; fn(e); };
+  window.addEventListener('keydown', h);
+  cleanups.push(() => window.removeEventListener('keydown', h));
+}
 const wait = ms => new Promise(r => later(r, ms));
 
 let ac = null;
@@ -590,7 +691,7 @@ function countdown(host, fn, from = 3, ms = 600) {
 /* ================= 1. Schulte table ================= */
 function schulte(ctx) {
   const st = stat('schulte'); st.best = st.best || {};
-  let n = st.size || 5, mark = st.mark !== false, dot = !!st.dot;
+  let n = st.size || 5, mark = st.mark === true, dot = !!st.dot;
   let next, t0, tick, mistakes, playing = false;
   ctx.controls.innerHTML = seg(t('size'), 'sz', [[3, '3×3'], [4, '4×4'], [5, '5×5'], [6, '6×6'], [7, '7×7']], n) +
     `<label class="check"><input type="checkbox" id="sch-mark" ${mark ? 'checked' : ''}> ${t('greyOut')}</label>
@@ -652,7 +753,7 @@ function schulte(ctx) {
 }
 
 /* ================= 2. Visual memory grid ================= */
-const GRID_LEVELS = [[3, 3], [3, 4], [4, 4], [4, 5], [4, 6], [5, 6], [5, 7], [5, 8], [5, 9], [6, 9], [6, 10], [6, 11], [6, 12], [6, 13], [6, 14], [7, 14], [7, 16], [7, 18]];
+const GRID_LEVELS = [[4, 5], [4, 6], [5, 6], [5, 7], [5, 8], [5, 9], [6, 9], [6, 10], [6, 11], [6, 12], [6, 13], [6, 14], [7, 14], [7, 16], [7, 18]];
 function gridLevel(L) { return GRID_LEVELS[Math.min(L, GRID_LEVELS.length) - 1]; }
 // Fixed grid sizes: lit cells go from size-1 up to half the grid.
 const GRID_SIZES = [3, 4, 5, 6, 7, 8];
@@ -660,7 +761,7 @@ const gridMin = s => s - 1, gridMax = s => Math.floor(s * s / 2);
 function gridFixedCount(st, s) { return Math.min(gridMax(s), Math.max(gridMin(s), (st.fixed || {})[s] || gridMin(s) + 1)); }
 function memoryGrid(ctx) {
   const st = stat('grid'); st.fixed = st.fixed || {}; st.bestFixed = st.bestFixed || {};
-  let L = st.level || 1, showS = st.show || 5, mode = GRID_SIZES.includes(st.mode) ? st.mode : 'auto', fails = 0;
+  let L = st.level || 1, showS = st.show || 3, mode = GRID_SIZES.includes(st.mode) ? st.mode : 'auto', fails = 0;
   let size, count, targets, picked, phase = 'idle', myRun, tRecall;
 
   function renderControls() {
@@ -771,14 +872,14 @@ const SKINS = {
 };
 function sequence(ctx, skinKey) {
   const skin = SKINS[skinKey], st = stat(skinKey === 'hands' ? 'hands' : 'seq');
-  let len = st.len || 3, speed = st.speed || 800, fails = 0;
+  let len = st.len || 4, speed = st.speed || 800, fails = 0;
   let seq = [], pos = 0, phase = 'idle', nItems, tInput;
   const gameKey = skinKey === 'hands' ? 'hands' : 'sequence';
   ctx.controls.innerHTML = seg(t('speed'), 'spd', [[1100, t('slow')], [800, t('normal')], [550, t('fast')]], speed) + `<button class="btn" id="s-down">${t('shorter')}</button>`;
   onSeg('spd', v => { speed = +v; st.speed = speed; save(); });
   $('#s-down').addEventListener('click', () => { if (len > 2) { len--; st.len = len; save(); ready(); } });
 
-  function itemCount() { return skinKey === 'hands' ? (len < 5 ? 4 : len < 7 ? 6 : 8) : (len < 7 ? 4 : 6); }
+  function itemCount() { return skinKey === 'hands' ? (len < 5 ? 4 : len < 7 ? 6 : 8) : (len < 6 ? 4 : 6); }
   function bar(txt) { pills(ctx.bar, [[t('length'), len, null, true], [t('best'), st.best || '—'], ['', txt || '', 's-state']]); }
   function ready() {
     run++; ctx.msg.innerHTML = ''; phase = 'idle'; nItems = itemCount(); bar(t('pressStart'));
@@ -875,7 +976,7 @@ function otherColor(type, c) {
   return COL[pick(BRIGHT.filter(k => COL[k] !== c))];
 }
 // [columns, rows, differences]
-const SPOT_LEVELS = [[4, 3, 5], [5, 3, 6], [5, 4, 7], [6, 4, 8], [6, 5, 10], [7, 5, 12], [8, 5, 14], [8, 6, 16], [9, 6, 18], [10, 7, 20]];
+const SPOT_LEVELS = [[6, 4, 8], [6, 5, 10], [7, 5, 12], [8, 5, 14], [8, 6, 16], [9, 6, 18], [10, 7, 20], [11, 8, 20], [12, 8, 20]];
 function makeScene(L) {
   const [cols, rows, nd] = SPOT_LEVELS[Math.min(L, SPOT_LEVELS.length) - 1];
   const W = 400, H = 300, cw = W / cols, ch = H / rows, skyRows = Math.max(1, Math.round(rows * .4));
@@ -1017,7 +1118,7 @@ const FAMILIES = [
   ['🍩', '🍪', '🥯', '🥨'], ['🐭', '🐹', '🐰', '🐨', '🐼'], ['⚽', '🏀', '🏐', '🎾', '⚾'], ['🍌', '🍋', '🌽', '🧀']
 ];
 function searchLevel(L) {
-  return { n: Math.min(230, 24 + 16 * (L - 1)), like: Math.min(.75, .1 * (L - 1)), time: Math.max(60, 120 - 6 * (L - 1)), tilt: L >= 3 };
+  return { n: Math.min(260, 56 + 16 * (L - 1)), like: Math.min(.8, .25 + .07 * (L - 1)), time: Math.max(60, 100 - 5 * (L - 1)), tilt: true };
 }
 function search(ctx) {
   const st = stat('search');
@@ -1086,11 +1187,218 @@ function search(ctx) {
   ready();
 }
 
+/* ================= 6–9. Trial games: Stroop, Flanker, Stop digit, N-back ================= */
+// One engine for tasks made of short timed trials. Each trial expects an answer, or null when the right move is to hold back.
+// Accuracy is balanced between "tap" and "hold back" trials, so tapping always (or never) scores 50%.
+function trialGame(ctx, G) {
+  const st = stat(G.key);
+  let L = st.level || 1, lv, i, hits, wrong, missed, taps, rts, t0, tShown, cur, hist, phase = 'idle', trialTimer, keyMap = {};
+  let goN, goHit, stopN, stopHit;
+  ctx.controls.innerHTML = `<button class="btn" id="tg-down">${t('easier')}</button>`;
+  $('#tg-down').addEventListener('click', () => { if (L > 1) { L--; st.level = L; save(); ready(); } });
+  onKey(e => {
+    if (e.repeat) return;
+    const a = keyMap[e.key] || keyMap[e.code]; if (!a) return;
+    e.preventDefault(); respond(a, ctx.stage.querySelector(`.ans[data-a="${a}"]`));
+  });
+  const probe = () => $('#tg-probe');
+  function bar() {
+    pills(ctx.bar, [[t('level'), L, null, true]].concat(G.pills ? G.pills(lv) : [],
+      [[t('trial'), `0/${lv.trials}`, 'tg-n'], [t('mistakes'), 0, 'tg-err'], [t('bestLevel'), st.best || 1]]));
+  }
+  function ready() {
+    run++; ctx.msg.innerHTML = ''; lv = G.lv(L); phase = 'idle';
+    i = hits = wrong = missed = taps = goN = goHit = stopN = stopHit = 0; rts = []; hist = [];
+    bar();
+    const ans = G.answers(lv); keyMap = {};
+    ans.forEach(o => (o.keys || []).forEach(k => keyMap[k] = o.a));
+    ctx.stage.innerHTML = `<p class="rule">${G.rule(lv)}</p><div class="probe" id="tg-probe"></div>
+      <div class="answers" style="--cols:${ans.length}">${ans.map(o => `<button class="ans${o.cls ? ' ' + o.cls : ''}" data-a="${o.a}" aria-label="${o.label}">${o.html}</button>`).join('')}</div>`;
+    ctx.stage.querySelector('.answers').addEventListener('pointerdown', e => { const b = e.target.closest('.ans'); if (b) { e.preventDefault(); respond(b.dataset.a, b); } });
+    probe().scrollIntoView({ block: 'center', behavior: 'smooth' });
+    countdown(probe(), () => { t0 = performance.now(); next(); });
+  }
+  function flash(el, cls) { if (!el) return; el.classList.add(cls); later(() => el.classList.remove(cls), 180); }
+  function next() {
+    if (i >= lv.trials) return finish();
+    const me = run;
+    cur = G.trial(lv, i, hist); cur.responded = false; hist.push(cur);
+    if (cur.answer === null) stopN++; else goN++;
+    probe().innerHTML = cur.html; tShown = performance.now(); phase = 'trial';
+    $('#tg-n').textContent = `${i + 1}/${lv.trials}`;
+    if (lv.showMs) { const c = cur; later(() => { if (me === run && c === cur) probe().querySelectorAll('.stim').forEach(x => x.classList.add('gone')); }, lv.showMs); }
+    trialTimer = later(endTrial, lv.limit);
+  }
+  function respond(a, btn) {
+    if (phase !== 'trial' || cur.responded) return;
+    cur.responded = true; taps++;
+    if (a === cur.answer) { hits++; goHit++; rts.push(performance.now() - tShown); flash(probe(), 'ok'); flash(btn, 'flash-ok'); }
+    else { wrong++; bad(); flash(probe(), 'bad'); flash(btn, 'flash-bad'); $('#tg-err').textContent = wrong + missed; }
+    if (!lv.fixed) { stop(trialTimer); endTrial(); }
+  }
+  function endTrial() {
+    if (phase !== 'trial') return;
+    if (!cur.responded) {
+      if (cur.answer === null) { hits++; stopHit++; }
+      else { missed++; flash(probe(), 'bad'); $('#tg-err').textContent = wrong + missed; }
+    }
+    phase = 'gap'; i++;
+    if (lv.gap) { probe().innerHTML = ''; later(next, lv.gap); } else next();
+  }
+  function finish() {
+    phase = 'done';
+    const ms = performance.now() - t0;
+    // Nobody played: save nothing and wait, so an idle page does not keep running rounds.
+    if (!taps) { result(ctx, t('noInput'), t('noInputSub'), [[t('tryAgain'), ready]]); return; }
+    const acc = goN && stopN ? (goHit / goN + stopHit / stopN) / 2 : hits / lv.trials;
+    const avg = rts.length ? rts.reduce((a, b) => a + b, 0) / rts.length : 0;
+    logRound();
+    const up = acc >= .9, down = acc < .7 && L > 1;
+    record(G.key, up, ms, acc, wrong + missed, Object.assign({ level: L, rt: Math.round(avg) }, G.info ? G.info(lv) : {}));
+    if (up) { L++; st.best = Math.max(st.best || 1, L); } else if (down) L--;
+    st.level = L; save();
+    if (up) fanfare(); else if (acc < .7) bad();
+    const extra = G.summary ? G.summary({ goN, goHit, stopN, stopHit }) : '';
+    result(ctx, up ? t('great') : acc >= .7 ? t('goodTry') : t('keepGoing'),
+      t('trialSum', pct(acc), avg ? secs(avg) : '—') + extra + (up ? t('levelUp') : down ? t('levelDown') : ''), [[t('nextRound'), ready]], 5);
+  }
+  ready();
+}
+const INKS = [['red', '#E0352B'], ['blue', '#1F5FD1'], ['green', '#17964A'], ['yellow', '#E0A800'], ['purple', '#8C3FC4']];
+const ARROWS = { left: '←', right: '→', up: '↑', down: '↓' };
+const TRIAL_GAMES = {
+  stroop: { key: 'stroop',
+    lv: L => ({ trials: 24, colors: L < 3 ? 4 : 5, incong: Math.min(.9, .7 + .04 * (L - 1)), limit: Math.max(1000, 2400 - 180 * (L - 1)), gap: 250 }),
+    rule: () => t('stroopRule'),
+    answers: lv => INKS.slice(0, lv.colors).map(([k, c], n) => ({ a: k, html: `<span class="sw" style="background:${c}"></span><kbd>${n + 1}</kbd>`, label: t('ink_' + k), keys: [String(n + 1)] })),
+    trial: lv => {
+      const pool = INKS.slice(0, lv.colors), ink = pick(pool), word = Math.random() < lv.incong ? pick(pool.filter(x => x !== ink)) : ink;
+      return { answer: ink[0], html: `<span class="stim stroop" style="color:${ink[1]}">${t('word_' + word[0])}</span>` };
+    } },
+  flanker: { key: 'flanker',
+    lv: L => ({ trials: 24, n: L < 4 ? 5 : 7, incong: Math.min(.8, .5 + .05 * (L - 1)), four: L >= 3, jump: L >= 2, limit: Math.max(900, 2000 - 120 * (L - 1)), gap: 250 }),
+    rule: () => t('flankerRule'),
+    answers: lv => (lv.four ? ['left', 'up', 'down', 'right'] : ['left', 'right']).map(d => ({ a: d, html: ARROWS[d], label: t('dir_' + d), keys: ['Arrow' + d[0].toUpperCase() + d.slice(1)] })),
+    trial: lv => {
+      const dirs = lv.four ? ['left', 'up', 'down', 'right'] : ['left', 'right'];
+      const mid = pick(dirs), fl = Math.random() < lv.incong ? pick(dirs.filter(d => d !== mid)) : mid;
+      const row = Array(lv.n).fill(fl); row[(lv.n - 1) / 2] = mid;
+      // From level 2 the row appears in a different spot each time, so the eyes must find it first.
+      const move = lv.jump ? `transform:translate(${rand(-8, 8).toFixed(0)}%, ${rand(-60, 60).toFixed(0)}%)` : '';
+      return { answer: mid, html: `<span class="stim flank" style="${move}">${row.map(d => ARROWS[d]).join('')}</span>` };
+    } },
+  gonogo: { key: 'gonogo',
+    lv: L => ({ trials: 45, stop: 1 + rnd(9), limit: Math.max(650, 1150 - 50 * (L - 1)), showMs: 300, fixed: true, gap: 0, nogo: .12 }),
+    rule: lv => t('sartRule', lv.stop),
+    pills: lv => [[t('dontTap'), lv.stop, null]],
+    answers: () => [{ a: 'go', html: t('tap'), label: t('tap'), keys: [' ', 'Space'], cls: 'go' }],
+    trial: lv => {
+      const d = Math.random() < lv.nogo ? lv.stop : pick([1, 2, 3, 4, 5, 6, 7, 8, 9].filter(x => x !== lv.stop));
+      return { answer: d === lv.stop ? null : 'go', html: `<span class="stim digit d${1 + rnd(3)}">${d}</span>` };
+    },
+    summary: s => t('sartSum', s.stopN - s.stopHit, s.goN - s.goHit),
+    info: lv => ({ stop: lv.stop }) },
+  nback: { key: 'nback',
+    lv: L => { const n = 2 + Math.floor((L - 1) / 2); return { n, trials: 20 + n, limit: (L - 1) % 2 ? 2000 : 2600, showMs: 600, fixed: true, gap: 0, p: .3 }; },
+    rule: lv => t('nbackRule', lv.n),
+    pills: lv => [['N', lv.n, null]],
+    answers: () => [{ a: 'match', html: t('match'), label: t('match'), keys: [' ', 'Space'], cls: 'go' }],
+    trial: (lv, i, hist) => {
+      let pos, match = false;
+      if (i >= lv.n && Math.random() < lv.p) { pos = hist[i - lv.n].pos; match = true; }
+      else { do { pos = rnd(9); } while (i >= lv.n && pos === hist[i - lv.n].pos); }
+      return { pos, answer: match ? 'match' : null, html: `<div class="nb-grid">${Array.from({ length: 9 }, (_, k) => `<i>${k === pos ? '<b class="stim"></b>' : ''}</i>`).join('')}</div>` };
+    },
+    summary: s => t('nbackSum', s.goHit, s.goN, s.stopN - s.stopHit),
+    info: lv => ({ n: lv.n }) }
+};
+
+/* ================= 10. Letter cancellation (Bourdon test) ================= */
+const BD_LETTERS = { ru: ['Ш', 'Щ', 'Ц', 'И', 'Й', 'Н', 'П'], en: ['b', 'd', 'p', 'q', 'h', 'n'] };
+function bourdonLevel(L) {
+  // Same number of letters on every screen; phones get fewer, larger letters per row.
+  const cols = window.innerWidth < 560 ? 10 : 14, count = 14 * Math.min(16, 8 + (L - 1));
+  return { cols, rows: Math.ceil(count / cols), targets: L < 3 ? 1 : 2, time: Math.max(60, 120 - 8 * (L - 1)), rate: .12 };
+}
+function bourdon(ctx) {
+  const st = stat('bourdon');
+  let L = st.level || 1, cfg, targets, cells, found, wrong, taps, total, t0, tEnd, tick, playing = false;
+  ctx.controls.innerHTML = `<button class="btn" id="bd-new">${t('newField')}</button><button class="btn" id="bd-down">${t('easier')}</button>`;
+  $('#bd-new').addEventListener('click', ready);
+  $('#bd-down').addEventListener('click', () => { if (L > 1) { L--; st.level = L; save(); ready(); } });
+  function bar() {
+    pills(ctx.bar, [[t('findLetters'), targets.join(' '), null, true], [t('timeLeft'), t('sec', cfg.time), 'bd-time'], [t('level'), L], [t('mistakes'), 0, 'bd-err'], [t('bestLevel'), st.best || 1]]);
+  }
+  function ready() {
+    if (tick) stop(tick);
+    run++; ctx.msg.innerHTML = ''; playing = false; cfg = bourdonLevel(L);
+    const set = shuffle(BD_LETTERS[data.lang].slice());
+    targets = set.slice(0, cfg.targets);
+    const others = set.slice(cfg.targets);
+    cells = Array.from({ length: cfg.cols * cfg.rows }, () => Math.random() < cfg.rate * cfg.targets ? pick(targets) : pick(others));
+    total = cells.filter(c => targets.includes(c)).length;
+    found = new Set(); wrong = 0; taps = 0;
+    bar();
+    ctx.stage.innerHTML = `<p class="rule">${t('bourdonRule', targets)}</p>
+      <div class="bd-grid cover" id="bd-grid" style="--cols:${cfg.cols}">${cells.map((c, k) => `<span data-k="${k}">${c}</span>`).join('')}</div>
+      <button class="btn primary" id="bd-done" disabled>${t('doneBtn')}</button>`;
+    $('#bd-grid').addEventListener('pointerdown', onTap);
+    $('#bd-done').addEventListener('click', () => finish(false));
+    countdown($('#bd-grid'), begin);
+  }
+  function begin() {
+    $('#bd-grid').classList.remove('cover'); $('#bd-done').disabled = false;
+    playing = true; t0 = performance.now(); tEnd = t0 + cfg.time * 1000;
+    tick = every(() => {
+      const left = Math.max(0, Math.ceil((tEnd - performance.now()) / 1000));
+      const el = $('#bd-time'); if (el) el.textContent = t('sec', left);
+      if (left <= 0) finish(true);
+    }, 250);
+  }
+  function onTap(e) {
+    const el = e.target.closest('span[data-k]'); if (!el || !playing) return;
+    e.preventDefault();
+    const k = +el.dataset.k; if (found.has(k)) return;
+    taps++;
+    if (targets.includes(cells[k])) { found.add(k); el.classList.add('hit'); }
+    else { wrong++; bad(); $('#bd-err').textContent = wrong; el.classList.add('bad'); later(() => el.classList.remove('bad'), 400); }
+  }
+  function finish(timeUp) {
+    if (!playing) return;
+    playing = false; stop(tick); $('#bd-done').disabled = true;
+    const ms = Math.min(performance.now() - t0, cfg.time * 1000);
+    cells.forEach((c, k) => { if (targets.includes(c) && !found.has(k)) $(`#bd-grid span[data-k="${k}"]`).classList.add('missed'); });
+    if (!taps) { result(ctx, t('noInput'), t('noInputSub'), [[t('tryAgain'), ready]]); return; }
+    const acc = found.size / (total + wrong);
+    logRound();
+    const up = acc >= .9, down = acc < .7 && L > 1;
+    record('bourdon', up, ms, acc, wrong + (total - found.size), { level: L, found: found.size, total });
+    if (up) { L++; st.best = Math.max(st.best || 1, L); } else if (down) L--;
+    st.level = L; save();
+    if (up) fanfare(); else bad();
+    // No automatic next round after a timeout, so the red outlines of missed letters can be studied.
+    result(ctx, timeUp ? t('timesUp') : up ? t('great') : acc >= .7 ? t('goodTry') : t('keepGoing'),
+      t('bourdonSum', found.size, total, wrong) + (up ? t('levelUp') : down ? t('levelDown') : ''), [[t('nextRound'), ready]], timeUp ? 0 : 5);
+  }
+  ready();
+}
+
 /* ================= Home ================= */
+const levelRec = key => { const s = stat(key); return [t('level') + ' ' + (s.level || 1), s.best ? t('bestLevel') + ': ' + s.best : t('notYet')]; };
 const GAMES = {
   schulte: { id: 'sch', play: schulte,
     rec: () => { const b = stat('schulte').best || {}; const n = stat('schulte').size || 5; return [t('bestSize', n), b[n] ? secs(b[n]) : t('notYet')]; },
     preview: () => `<div class="pv-grid" style="grid-template-columns:repeat(5,20px)">${[12, 7, 21, 3, 16, 9, 1, 24, 14, 5, 18, 11, 25, 2, 20, 6, 22, 8, 15, 10, 13, 4, 19, 23, 17].map(k => `<i class="${k === 1 ? 'on' : ''}">${k}</i>`).join('')}</div>` },
+  stroop: { id: 'stroop', play: c => trialGame(c, TRIAL_GAMES.stroop), rec: () => levelRec('stroop'),
+    preview: () => `<span class="pv-stroop" style="color:#1F5FD1">${t('word_red')}</span>` },
+  flanker: { id: 'flanker', play: c => trialGame(c, TRIAL_GAMES.flanker), rec: () => levelRec('flanker'),
+    preview: () => `<span class="pv-flank">←←→←←</span>` },
+  gonogo: { id: 'gonogo', play: c => trialGame(c, TRIAL_GAMES.gonogo), rec: () => levelRec('gonogo'),
+    preview: () => `<span class="pv-digits">5 8 <s>3</s> 1 7</span>` },
+  nback: { id: 'nback', play: c => trialGame(c, TRIAL_GAMES.nback), rec: () => { const L = stat('nback').level || 1; return [t('level') + ' ' + L, 'N = ' + TRIAL_GAMES.nback.lv(L).n]; },
+    preview: () => `<div class="pv-grid" style="grid-template-columns:repeat(3,20px)">${Array.from({ length: 9 }, (_, i) => `<i class="${i === 5 ? 'on' : ''}"></i>`).join('')}</div>` },
+  bourdon: { id: 'bourdon', play: bourdon, rec: () => levelRec('bourdon'),
+    preview: () => `<span class="pv-letters">${data.lang === 'ru' ? 'ШЩ<b>Ц</b>ИЙШ<b>Ц</b>Щ' : 'bd<b>q</b>pbd<b>q</b>p'}</span>` },
   grid: { id: 'grid', play: memoryGrid,
     rec: () => { const st = stat('grid'); if (GRID_SIZES.includes(st.mode)) return [t('grid'), t('gridRec', st.mode, gridFixedCount(st, st.mode))]; const L = st.level || 1; const [s, c] = gridLevel(L); return [t('level') + ' ' + L, t('gridRec', s, c)]; },
     preview: () => `<div class="pv-grid" style="grid-template-columns:repeat(4,20px)">${Array.from({ length: 16 }, (_, i) => `<i class="${[1, 6, 11, 12].includes(i) ? 'on' : ''}"></i>`).join('')}</div>` },
@@ -1166,6 +1474,9 @@ function setupText(r) {
     case 'sequence': case 'hands': return t('lenN', i.len);
     case 'spot': return `${t('lvl', i.level)} · ${i.found}/${i.total}`;
     case 'search': return `${t('lvl', i.level)} · ${t('itemsN', i.items)}`;
+    case 'nback': return `N = ${i.n} · ${t('lvl', i.level)}`;
+    case 'bourdon': return `${t('lvl', i.level)} · ${i.found}/${i.total}`;
+    case 'stroop': case 'flanker': case 'gonogo': return t('lvl', i.level) + (i.rt ? ` · ${secs(i.rt)}` : '');
   }
   return '';
 }
@@ -1180,7 +1491,7 @@ function bestText(game, rows) {
   }
   if (game === 'grid') return t('gridBest', Math.max(...won.map(r => r.info.cells)));
   if (game === 'sequence' || game === 'hands') return t('inARow', Math.max(...won.map(r => r.info.len)));
-  if (game === 'spot' || game === 'search') return t('lvl', Math.max(...won.map(r => r.info.level)));
+  if (['spot', 'search', 'stroop', 'flanker', 'gonogo', 'nback', 'bourdon'].includes(game)) return t('lvl', Math.max(...won.map(r => r.info.level)));
   return '—';
 }
 const sb = { game: 'all', name: 'all', sort: 'new', confirm: false };
