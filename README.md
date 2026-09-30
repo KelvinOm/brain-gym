@@ -14,7 +14,14 @@ Works in the browser with no install. The interface is in Russian and English (s
 - **Find It / Найди предмет**: find the one hidden item in a busy picture before the 60–120 s timer ends.
 - **Copy the Hands / Повтори жесты**: copy a sequence of hand signs, then tap it back.
 
-Rounds start by themselves after a 3-2-1 countdown. Progress is saved in the browser (localStorage), so each device has its own.
+Rounds start by themselves after a 3-2-1 countdown.
+
+## Scoreboard
+
+Type a name in the top bar, and every finished round is saved with the game, settings, time, accuracy, mistakes and result.
+The 🏆 page shows a summary per player and a table you can filter by game and player and sort by date, speed or accuracy.
+
+Progress and the scoreboard are saved in the browser (localStorage), so each device keeps its own.
 
 ## Editing
 

@@ -59,12 +59,33 @@ a { color: var(--accent); }
 .brand-mark::after { inset: 15px; background: var(--sun); border: 0; }
 .brand b { font: 800 26px/1 var(--display); letter-spacing: -.01em; }
 .who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-  display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px;
-  border-radius: 999px; border: 2px solid var(--line); background: var(--surface);
-  font-weight: 600; min-height: 44px;
-}
 .icon-btn { min-width: 44px; min-height: 44px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); padding: 0 12px; }
 .today { font-size: 13px; color: var(--muted); }
+.who-name { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); padding: 3px 12px 3px 10px; min-height: 44px; }
+.who-name input { border: 0; background: transparent; width: 9.5em; font-weight: 700; padding: 6px 0; }
+.who-name input:focus { outline: none; }
+.who-name:focus-within { border-color: var(--accent); }
+a.icon-btn { display: inline-grid; place-items: center; text-decoration: none; font-size: 18px; }
+.saved { font-size: 13px; color: var(--muted); }
+.sb-summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.sb-card { background: var(--surface); border-radius: 18px; padding: 14px 16px; box-shadow: var(--shadow); display: grid; gap: 8px; min-width: 0; }
+.sb-card h3 { font-size: 22px; overflow-wrap: anywhere; }
+.sb-card dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; }
+.sb-card dt { color: var(--muted); }
+.sb-card dd { margin: 0; font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+.sb-filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+.sb-filters label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.sb-filters select { border: 2px solid var(--line); border-radius: 12px; background: var(--surface); padding: 8px 10px; min-height: 44px; font-weight: 600; color: var(--ink); }
+.sb-table-wrap { overflow-x: auto; background: var(--surface); border-radius: 18px; box-shadow: var(--shadow); }
+.sb-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.sb-table th, .sb-table td { padding: 10px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+.sb-table th { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.sb-table td.num, .sb-table th.num { text-align: right; }
+.sb-table tr:last-child td { border-bottom: 0; }
+.res-ok { color: var(--good); font-weight: 800; }
+.res-no { color: var(--bad); font-weight: 800; }
+.sb-empty { background: var(--surface); border-radius: 18px; padding: 24px; text-align: center; color: var(--muted); border: 2px dashed var(--line); }
+.sb-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; color: var(--muted); font-size: 14px; }
 .stepper { display: inline-flex; align-items: center; gap: 6px; }
 .stepper .btn { min-width: 44px; padding: 0; font-size: 22px; line-height: 1; }
 .stepper b { min-width: 2.2ch; text-align: center; font: 800 22px/1 var(--display); font-variant-numeric: tabular-nums; }
@@ -260,9 +281,23 @@ function logRound() {
   const k = today();
   if (!data.log[k]) data.log = { [k]: {} };
   data.log[k][data.current] = (data.log[k][data.current] || 0) + 1;
-  save(); renderWho();
+  save(); updateToday();
 }
 const roundsToday = () => (data.log[today()] || {})[data.current] || 0;
+
+/* ================= Scoreboard records ================= */
+// One entry per finished round: time (ts), name, game, won, ms, accuracy 0..1, mistakes, game-specific info.
+const MAX_SCORES = 3000;
+let lastSaved = null;
+function playerName() { return (data.name || '').trim() || t('guest'); }
+function record(game, won, ms, acc, err, info) {
+  if (!Array.isArray(data.scores)) data.scores = [];
+  const r = { ts: Date.now(), name: playerName(), game, won: !!won, ms: Math.round(ms), acc: Math.max(0, Math.min(1, acc)), err, info: info || {} };
+  data.scores.push(r);
+  if (data.scores.length > MAX_SCORES) data.scores.splice(0, data.scores.length - MAX_SCORES);
+  lastSaved = r;
+  save();
+}
 
 /* ================= Text (English + Russian) ================= */
 // Russian plural: 1 раунд, 2 раунда, 5 раундов
@@ -277,7 +312,15 @@ const en = (n, one, many) => n === 1 ? one : many;
 const TXT = {
   en: {
     today: n => `Today: <b>${n}</b> ${en(n, 'round', 'rounds')}`,
-    sound: 'Sound', langName: 'Language',
+    sound: 'Sound', langName: 'Language', yourName: 'Your name', guest: 'Guest', scores: 'Scoreboard',
+    savedFor: (n, a) => `🏆 Saved for ${n} · accuracy ${a}`,
+    scoresTitle: 'Scoreboard', allGames: 'All games', allPlayers: 'Everyone', sortBy: 'Sort', newest: 'Newest first', fastest: 'Fastest first', accurate: 'Most accurate first',
+    colDate: 'Date', colName: 'Name', colGame: 'Game', colSetup: 'Setup', colTime: 'Time', colAcc: 'Accuracy', colErr: 'Mistakes', colResult: 'Result',
+    win: 'won', loss: 'missed', roundsLabel: 'Rounds', wins: 'Won', avgAcc: 'Avg. accuracy', bestRes: 'Best', played: 'Time played',
+    lenN: n => `length ${n}`, lvl: n => `Level ${n}`, gridBest: n => `${n} cells`,
+    sbEmpty: 'No results yet. Type your name at the top, play any game, and every round will show up here.',
+    showingN: (a, b) => a === b ? `${b} ${en(b, 'round', 'rounds')}` : `Showing the first ${a} of ${b} rounds`,
+    clearAll: 'Clear scoreboard', confirmClear: n => `Delete all ${n} results? This cannot be undone.`, del: 'Delete', cancel: 'Cancel',
     back: '← All games', start: 'Start', pause: 'Pause ⏸', playAgain: 'Play again', tryAgain: 'Try again', nextRound: 'Next round', easier: 'Easier',
     best: 'Best', level: 'Level', time: 'Time', mistakes: 'Mistakes', misses: 'Misses', bestLevel: 'Best level', notYet: 'not yet',
     secs: ms => (ms / 1000).toFixed(1) + 's', sec: n => n + 's',
@@ -334,7 +377,15 @@ const TXT = {
   },
   ru: {
     today: n => `Сегодня: <b>${n}</b> ${ru(n, 'раунд', 'раунда', 'раундов')}`,
-    sound: 'Звук', langName: 'Язык',
+    sound: 'Звук', langName: 'Язык', yourName: 'Твоё имя', guest: 'Гость', scores: 'Рекорды',
+    savedFor: (n, a) => `🏆 Записано: ${n} · точность ${a}`,
+    scoresTitle: 'Таблица рекордов', allGames: 'Все игры', allPlayers: 'Все игроки', sortBy: 'Сортировка', newest: 'Сначала новые', fastest: 'Сначала быстрые', accurate: 'Сначала точные',
+    colDate: 'Дата', colName: 'Имя', colGame: 'Игра', colSetup: 'Настройки', colTime: 'Время', colAcc: 'Точность', colErr: 'Ошибки', colResult: 'Итог',
+    win: 'победа', loss: 'не вышло', roundsLabel: 'Раунды', wins: 'Победы', avgAcc: 'Средняя точность', bestRes: 'Лучшее', played: 'Время в игре',
+    lenN: n => `длина ${n}`, lvl: n => `Уровень ${n}`, gridBest: n => `${n} ${ru(n, 'клетка', 'клетки', 'клеток')}`,
+    sbEmpty: 'Пока нет результатов. Впиши своё имя вверху, сыграй в любую игру, и каждый раунд появится здесь.',
+    showingN: (a, b) => a === b ? `${b} ${ru(b, 'раунд', 'раунда', 'раундов')}` : `Показаны первые ${a} из ${b} раундов`,
+    clearAll: 'Очистить таблицу', confirmClear: n => `Удалить все результаты (${n})? Это нельзя отменить.`, del: 'Удалить', cancel: 'Отмена',
     back: '← Все игры', start: 'Старт', pause: 'Пауза ⏸', playAgain: 'Ещё раз', tryAgain: 'Попробовать ещё', nextRound: 'Следующий раунд', easier: 'Полегче',
     best: 'Рекорд', level: 'Уровень', time: 'Время', mistakes: 'Ошибки', misses: 'Промахи', bestLevel: 'Лучший уровень', notYet: 'пока нет',
     secs: ms => (ms / 1000).toFixed(1).replace('.', ',') + ' с', sec: n => n + ' с',
@@ -429,11 +480,21 @@ const fanfare = () => { [523, 659, 784, 1046].forEach((f, i) => later(() => beep
 /* ================= Header: sound, language ================= */
 function renderWho() {
   document.documentElement.lang = data.lang;
+  const names = [...new Set((data.scores || []).map(r => r.name))];
   $('#who').innerHTML =
+  `<label class="who-name" title="${t('yourName')}"><span aria-hidden="true">👤</span><input id="player-name" list="player-names" maxlength="20" autocomplete="off" placeholder="${t('yourName')}" aria-label="${t('yourName')}" value="${esc(data.name || '')}"></label>` +
+  `<datalist id="player-names">${names.map(n => `<option value="${esc(n)}"></option>`).join('')}</datalist>` +
+  `<a class="icon-btn" href="#scores" aria-label="${t('scores')}" title="${t('scores')}">🏆</a>` +
   `<button class="icon-btn" id="sound-btn" aria-label="${t('sound')}" aria-pressed="${data.sound}" title="${t('sound')}">${data.sound ? '🔊' : '🔇'}</button>` +
   `<span class="lang" role="group" aria-label="${t('langName')}"><button data-lang="ru" aria-pressed="${data.lang === 'ru'}">RU</button><button data-lang="en" aria-pressed="${data.lang === 'en'}">EN</button></span>` +
-  `<span class="today">${t('today', roundsToday())}</span>`;
+  `<span class="today" id="today">${t('today', roundsToday())}</span>`;
 }
+function updateToday() { const el = $('#today'); if (el) el.innerHTML = t('today', roundsToday()); }
+$('#who').addEventListener('input', e => {
+  if (e.target.id !== 'player-name') return;
+  data.name = e.target.value.trim(); save();
+  if (location.hash === '#scores') renderScores();
+});
 $('#who').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.lang) {
@@ -473,7 +534,9 @@ function onSeg(id, fn) {
 function result(ctx, title, sub, buttons, auto) {
   ctx.msg.innerHTML = `<div class="result"><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}<div class="row">${
     buttons.map((b, i) => `<button class="btn${i === 0 ? ' primary' : ''}" data-i="${i}">${b[0]}</button>`).join('')}${
-    auto ? `<button class="btn" data-pause>${t('pause')}</button>` : ''}</div></div>`;
+    auto ? `<button class="btn" data-pause>${t('pause')}</button>` : ''}</div>${
+    lastSaved ? `<p class="saved">${t('savedFor', esc(lastSaved.name), pct(lastSaved.acc))}</p>` : ''}</div>`;
+  lastSaved = null;
   const card = ctx.msg.firstElementChild, first = card.querySelector('.btn');
   card.querySelectorAll('[data-i]').forEach(el => el.addEventListener('click', () => { ctx.msg.innerHTML = ''; buttons[+el.dataset.i][1](); }));
   first.focus({ preventScroll: true });
@@ -555,11 +618,12 @@ function schulte(ctx) {
     playing = false; stop(tick);
     const ms = performance.now() - t0;
     $('#sch-time').textContent = secs(ms);
-    const prev = st.best[n], record = !prev || ms < prev;
-    if (record) st.best[n] = Math.round(ms);
+    const prev = st.best[n], isBest = !prev || ms < prev;
+    if (isBest) st.best[n] = Math.round(ms);
     save(); logRound(); fanfare();
-    result(ctx, record ? t('newBest') : t('doneIn', secs(ms)),
-      t('schSummary', n, secs(ms), mistakes) + (prev && !record ? t('yourBest', secs(prev)) : ''),
+    record('schulte', true, ms, (n * n) / (n * n + mistakes), mistakes, { size: n });
+    result(ctx, isBest ? t('newBest') : t('doneIn', secs(ms)),
+      t('schSummary', n, secs(ms), mistakes) + (prev && !isBest ? t('yourBest', secs(prev)) : ''),
       [[t('playAgain'), ready]], 4);
   }
   ready();
@@ -575,7 +639,7 @@ function gridFixedCount(st, s) { return Math.min(gridMax(s), Math.max(gridMin(s)
 function memoryGrid(ctx) {
   const st = stat('grid'); st.fixed = st.fixed || {}; st.bestFixed = st.bestFixed || {};
   let L = st.level || 1, showS = st.show || 5, mode = GRID_SIZES.includes(st.mode) ? st.mode : 'auto', fails = 0;
-  let size, count, targets, picked, phase = 'idle', myRun;
+  let size, count, targets, picked, phase = 'idle', myRun, tRecall;
 
   function renderControls() {
     const fixed = mode !== 'auto';
@@ -628,7 +692,7 @@ function memoryGrid(ctx) {
     tb.style.transition = `transform ${showS}s linear`; tb.style.transform = 'scaleX(0)';
     await wait(showS * 1000); if (me !== run) return;
     cells().forEach(c => c.classList.remove('lit'));
-    phase = 'recall'; $('#g-board').classList.remove('locked');
+    phase = 'recall'; tRecall = performance.now(); $('#g-board').classList.remove('locked');
     $('#g-state').textContent = t('tapCells', count, 0);
   }
   const cells = () => [...$('#g-board').children];
@@ -651,6 +715,7 @@ function memoryGrid(ctx) {
       else if (picked.has(i)) c.classList.add('bad');
     });
     logRound();
+    record('grid', hits === count, performance.now() - tRecall - 250, hits / count, count - hits, { size, cells: count, level: mode === 'auto' ? L : null });
     if (hits === count) {
       fanfare(); fails = 0;
       if (mode === 'auto') {
@@ -685,7 +750,8 @@ const SKINS = {
 function sequence(ctx, skinKey) {
   const skin = SKINS[skinKey], st = stat(skinKey === 'hands' ? 'hands' : 'seq');
   let len = st.len || 3, speed = st.speed || 800, fails = 0;
-  let seq = [], pos = 0, phase = 'idle', nItems;
+  let seq = [], pos = 0, phase = 'idle', nItems, tInput;
+  const gameKey = skinKey === 'hands' ? 'hands' : 'sequence';
   ctx.controls.innerHTML = seg(t('speed'), 'spd', [[1100, t('slow')], [800, t('normal')], [550, t('fast')]], speed) + `<button class="btn" id="s-down">${t('shorter')}</button>`;
   onSeg('spd', v => { speed = +v; st.speed = speed; save(); });
   $('#s-down').addEventListener('click', () => { if (len > 2) { len--; st.len = len; save(); ready(); } });
@@ -718,7 +784,7 @@ function sequence(ctx, skinKey) {
       await wait(speed * .38); if (me !== run) return;
     }
     win.innerHTML = `<span class="ghost">${t('yourTurn')}</span>`;
-    phase = 'input'; pos = 0; pads().forEach(p => p.disabled = false);
+    phase = 'input'; pos = 0; tInput = performance.now(); pads().forEach(p => p.disabled = false);
     $('#s-state').textContent = t('yourTurnN', 0, len);
     $('#s-entered').innerHTML = seq.map(() => '<span></span>').join('');
   }
@@ -739,11 +805,13 @@ function sequence(ctx, skinKey) {
   function end() { phase = 'done'; pads().forEach(p => p.disabled = true); logRound(); }
   function winRound() {
     end(); fanfare(); fails = 0;
+    record(gameKey, true, performance.now() - tInput, 1, 0, { len });
     const done = len; len++; st.len = len; st.best = Math.max(st.best || 0, done); save();
     result(ctx, t('inARowWin', done), t('nextHas', len), [[t('nextRound'), ready]], 3);
   }
   function lose() {
     end(); bad(); fails++;
+    record(gameKey, false, performance.now() - tInput, pos / len, 1, { len });
     if (fails >= 2 && len > 2) { len--; fails = 0; st.len = len; save(); }
     const ans = `<span class="answer">${seq.map(k => skin.items[k]).join('<span aria-hidden="true">→</span>')}</span>`;
     result(ctx, t('oops'), `${t('seqWas')}<br>${ans}`, [[t('tryAgain'), ready]], 5);
@@ -901,12 +969,15 @@ function spot(ctx) {
     if (!playing) return;
     playing = false; stop(tick);
     sc.diffs.forEach((d, i) => { if (!found.has(i)) addMark(d.x, d.y, d.r, 'mark-reveal'); });
+    logRound();
+    record('spot', false, performance.now() - t0, found.size ? found.size / (found.size + mistakes) : 0, mistakes, { level: L, found: found.size, total: sc.diffs.length, hints });
     result(ctx, t('foundOf', found.size, sc.diffs.length), t('dashedRest'), [[t('newPicture'), ready]]);
   }
   function finish() {
     playing = false; stop(tick);
     const s = Math.round((performance.now() - t0) / 1000);
     logRound(); fanfare();
+    record('spot', true, performance.now() - t0, found.size / (found.size + mistakes), mistakes, { level: L, found: found.size, total: sc.diffs.length, hints });
     const up = hints === 0 && mistakes <= 3;
     if (up) { L++; st.level = L; st.best = Math.max(st.best || 1, L); }
     save();
@@ -974,6 +1045,7 @@ function search(ctx) {
     if (+s.dataset.i === targetIdx) {
       playing = false; stop(tick); s.classList.add('win'); fanfare(); logRound();
       const used = Math.round(cfg.time - (tEnd - performance.now()) / 1000);
+      record('search', true, cfg.time * 1000 - (tEnd - performance.now()), 1 / (1 + mistakes), mistakes, { level: L, items: cfg.n });
       L++; st.level = L; st.best = Math.max(st.best || 1, L); save();
       result(ctx, t('foundIt'), t('tookS', used), [[t('nextLevel'), ready]], 3);
     } else {
@@ -983,9 +1055,11 @@ function search(ctx) {
   }
   function timeout() {
     playing = false; stop(tick); bad(); logRound();
+    record('search', false, cfg.time * 1000, 0, mistakes, { level: L, items: cfg.n });
     const s = $(`#w-field span[data-i="${targetIdx}"]`); if (s) s.classList.add('reveal');
     if (L > 1) { L--; st.level = L; save(); }
-    result(ctx, t('timesUp'), t('redCircle'), [[t('tryAnother'), ready]], 5);
+    // No auto-continue after a timeout: if nobody is playing, rounds must not keep timing out on their own.
+    result(ctx, t('timesUp'), t('redCircle'), [[t('tryAnother'), ready]]);
   }
   ready();
 }
@@ -1020,11 +1094,94 @@ function renderHome() {
     <p class="tip">${t('tip')}</p>`;
 }
 
+/* ================= Scoreboard page ================= */
+const pct = a => Math.round(a * 100) + '%';
+function dur(ms) {
+  if (ms < 60000) return secs(ms);
+  const m = Math.floor(ms / 60000), sec = Math.round((ms % 60000) / 1000);
+  return data.lang === 'ru' ? `${m} мин ${sec} с` : `${m}m ${sec}s`;
+}
+function setupText(r) {
+  const i = r.info || {};
+  switch (r.game) {
+    case 'schulte': return i.size + '×' + i.size;
+    case 'grid': return t('gridRec', i.size, i.cells);
+    case 'sequence': case 'hands': return t('lenN', i.len);
+    case 'spot': return `${t('lvl', i.level)} · ${i.found}/${i.total}`;
+    case 'search': return `${t('lvl', i.level)} · ${t('itemsN', i.items)}`;
+  }
+  return '';
+}
+function bestText(game, rows) {
+  const won = rows.filter(r => r.won);
+  if (!won.length) return '—';
+  if (game === 'schulte') {
+    // fastest time on the size played most
+    const bySize = {}; won.forEach(r => (bySize[r.info.size] = bySize[r.info.size] || []).push(r));
+    const size = Object.keys(bySize).sort((a, b) => bySize[b].length - bySize[a].length)[0];
+    return `${size}×${size}: ${secs(Math.min(...bySize[size].map(r => r.ms)))}`;
+  }
+  if (game === 'grid') return t('gridBest', Math.max(...won.map(r => r.info.cells)));
+  if (game === 'sequence' || game === 'hands') return t('inARow', Math.max(...won.map(r => r.info.len)));
+  if (game === 'spot' || game === 'search') return t('lvl', Math.max(...won.map(r => r.info.level)));
+  return '—';
+}
+const sb = { game: 'all', name: 'all', sort: 'new', confirm: false };
+function renderScores() {
+  const all = Array.isArray(data.scores) ? data.scores : [];
+  const names = [...new Set(all.map(r => r.name))].sort((a, b) => a.localeCompare(b));
+  if (sb.name !== 'all' && !names.includes(sb.name)) sb.name = 'all';
+  const rows = all.filter(r => (sb.game === 'all' || r.game === sb.game) && (sb.name === 'all' || r.name === sb.name));
+  const sorted = rows.slice().sort(sb.sort === 'fast' ? (a, b) => (b.won - a.won) || a.ms - b.ms : sb.sort === 'acc' ? (a, b) => b.acc - a.acc || a.ms - b.ms : (a, b) => b.ts - a.ts);
+  const shown = sorted.slice(0, 200);
+  const locale = data.lang === 'ru' ? 'ru-RU' : 'en-GB';
+  const gameOpts = [['all', t('allGames')]].concat(Object.entries(GAMES).map(([k, g]) => [k, t(g.id + 'Title')]));
+  const opt = (v, txt, cur) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(txt)}</option>`;
+
+  // One summary card per player (for the current game filter)
+  const byName = {};
+  rows.forEach(r => (byName[r.name] = byName[r.name] || []).push(r));
+  const cards = Object.entries(byName).sort((a, b) => b[1].length - a[1].length).map(([name, rs]) => {
+    const wins = rs.filter(r => r.won).length, acc = rs.reduce((s, r) => s + r.acc, 0) / rs.length, time = rs.reduce((s, r) => s + r.ms, 0);
+    return `<div class="sb-card"><h3>${esc(name)}</h3><dl>
+      <dt>${t('roundsLabel')}</dt><dd>${rs.length}</dd>
+      <dt>${t('wins')}</dt><dd>${wins} (${pct(wins / rs.length)})</dd>
+      <dt>${t('avgAcc')}</dt><dd>${pct(acc)}</dd>
+      ${sb.game !== 'all' ? `<dt>${t('bestRes')}</dt><dd>${bestText(sb.game, rs)}</dd>` : ''}
+      <dt>${t('played')}</dt><dd>${dur(time)}</dd></dl></div>`;
+  }).join('');
+
+  $('#main').innerHTML = `<section class="game">
+    <div class="game-head"><a class="back" href="#">${t('back')}</a><h1>${t('scoresTitle')}</h1></div>
+    <div class="sb-filters">
+      <label>${t('colGame')}<select id="sb-game">${gameOpts.map(([v, txt]) => opt(v, txt, sb.game)).join('')}</select></label>
+      <label>${t('colName')}<select id="sb-name">${opt('all', t('allPlayers'), sb.name)}${names.map(n => opt(n, n, sb.name)).join('')}</select></label>
+      <label>${t('sortBy')}<select id="sb-sort">${opt('new', t('newest'), sb.sort)}${opt('fast', t('fastest'), sb.sort)}${opt('acc', t('accurate'), sb.sort)}</select></label>
+    </div>
+    ${rows.length ? `<div class="sb-summary">${cards}</div>
+    <div class="sb-table-wrap"><table class="sb-table">
+      <thead><tr><th>${t('colDate')}</th><th>${t('colName')}</th><th>${t('colGame')}</th><th>${t('colSetup')}</th><th class="num">${t('colTime')}</th><th class="num">${t('colAcc')}</th><th class="num">${t('colErr')}</th><th>${t('colResult')}</th></tr></thead>
+      <tbody>${shown.map(r => `<tr><td>${new Date(r.ts).toLocaleString(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${esc(r.name)}</td><td>${t(GAMES[r.game].id + 'Title')}</td><td>${setupText(r)}</td><td class="num">${dur(r.ms)}</td><td class="num">${pct(r.acc)}</td><td class="num">${r.err}</td><td>${r.won ? `<span class="res-ok">✓ ${t('win')}</span>` : `<span class="res-no">✗ ${t('loss')}</span>`}</td></tr>`).join('')}</tbody>
+    </table></div>` : `<p class="sb-empty">${t('sbEmpty')}</p>`}
+    <div class="sb-foot"><span>${rows.length ? t('showingN', shown.length, rows.length) : ''}</span>
+      ${all.length ? (sb.confirm
+        ? `<span class="row" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${t('confirmClear', all.length)} <button class="btn" id="sb-yes" style="border-color:var(--bad);color:var(--bad)">${t('del')}</button><button class="btn" id="sb-no">${t('cancel')}</button></span>`
+        : `<button class="btn" id="sb-clear">${t('clearAll')}</button>`) : ''}</div>
+  </section>`;
+  $('#sb-game').addEventListener('change', e => { sb.game = e.target.value; renderScores(); });
+  $('#sb-name').addEventListener('change', e => { sb.name = e.target.value; renderScores(); });
+  $('#sb-sort').addEventListener('change', e => { sb.sort = e.target.value; renderScores(); });
+  const clr = $('#sb-clear'); if (clr) clr.addEventListener('click', () => { sb.confirm = true; renderScores(); });
+  const yes = $('#sb-yes'); if (yes) yes.addEventListener('click', () => { data.scores = []; sb.confirm = false; save(); renderWho(); renderScores(); });
+  const no = $('#sb-no'); if (no) no.addEventListener('click', () => { sb.confirm = false; renderScores(); });
+}
+
 /* ================= Router ================= */
 function route() {
   teardown();
   const key = location.hash.slice(1), g = GAMES[key];
-  if (g) { const ctx = shell(g); g.play(ctx); document.title = t(g.id + 'Title') + ' · Focus Boost'; }
+  if (key === 'scores') { sb.confirm = false; renderScores(); document.title = t('scoresTitle') + ' · Focus Boost'; }
+  else if (g) { const ctx = shell(g); g.play(ctx); document.title = t(g.id + 'Title') + ' · Focus Boost'; }
   else { renderHome(); document.title = 'Focus Boost'; }
 }
 window.addEventListener('hashchange', () => { route(); window.scrollTo(0, 0); });
