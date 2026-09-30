@@ -1,0 +1,1038 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+</head>
+<body>
+<title>Focus Boost</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: a calm "play mat" — one centred column, game cards on the home screen, one focused board per game. */
+:root {
+  --bg: #EAF4F1;
+  --surface: #FFFFFF;
+  --cell: #F4FAF8;
+  --ink: #12343B;
+  --muted: #587278;
+  --line: #CFE2DD;
+  --accent: #147C77;
+  --accent-ink: #FFFFFF;
+  --sun: #FFC845;
+  --sun-ink: #3A2A00;
+  --good: #23945A;
+  --bad: #D2413F;
+  --shadow: 0 1px 0 rgba(18, 52, 59, .06), 0 8px 24px -12px rgba(18, 52, 59, .25);
+  --display: 'Rubik', 'Arial Rounded MT Bold', 'Trebuchet MS', system-ui, sans-serif;
+  --body: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C1E22; --surface: #14303A; --cell: #1A3A44; --ink: #E3F1EE; --muted: #93B0B4;
+    --line: #25484F; --accent: #3CC1B8; --accent-ink: #052528; --sun: #FFC845; --sun-ink: #3A2A00;
+    --good: #4CC57F; --bad: #FF6B6B; --shadow: 0 1px 0 rgba(0,0,0,.2), 0 10px 28px -14px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C1E22; --surface: #14303A; --cell: #1A3A44; --ink: #E3F1EE; --muted: #93B0B4;
+  --line: #25484F; --accent: #3CC1B8; --accent-ink: #052528; --sun: #FFC845; --sun-ink: #3A2A00;
+  --good: #4CC57F; --bad: #FF6B6B; --shadow: 0 1px 0 rgba(0,0,0,.2), 0 10px 28px -14px rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 400 16px/1.5 var(--body);
+  padding-inline: 16px; padding-block: 12px 48px;
+  -webkit-tap-highlight-color: transparent;
+}
+.app { max-width: 980px; margin: 0 auto; display: grid; gap: 20px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--sun); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+a { color: var(--accent); }
+
+/* ---------- Top bar ---------- */
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.brand-mark { width: 38px; height: 38px; border-radius: 50%; background: var(--accent); position: relative; flex: none; }
+.brand-mark::before, .brand-mark::after { content: ""; position: absolute; border-radius: 50%; inset: 8px; border: 3px solid var(--accent-ink); }
+.brand-mark::after { inset: 15px; background: var(--sun); border: 0; }
+.brand b { font: 800 26px/1 var(--display); letter-spacing: -.01em; }
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.player {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 6px;
+  border-radius: 999px; border: 2px solid var(--line); background: var(--surface);
+  font-weight: 600; min-height: 44px;
+}
+.player .av { width: 32px; height: 32px; display: grid; place-items: center; font-size: 20px; border-radius: 50%; background: var(--cell); }
+.player[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+.player[aria-pressed="true"] .av { background: var(--surface); }
+.icon-btn { min-width: 44px; min-height: 44px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface); padding: 0 12px; }
+.today { font-size: 13px; color: var(--muted); }
+.lang { display: inline-flex; border: 2px solid var(--line); border-radius: 999px; background: var(--surface); padding: 3px; }
+.lang button { border: 0; background: transparent; border-radius: 999px; min-height: 36px; min-width: 40px; padding: 0 10px; font-weight: 800; font-size: 13px; letter-spacing: .04em; }
+.lang button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+
+.edit-players { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; background: var(--surface); border: 2px solid var(--line); border-radius: 16px; padding: 14px; }
+.edit-players label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+.edit-players input { border: 2px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--cell); width: 150px; }
+.av-pick { display: flex; gap: 4px; flex-wrap: wrap; }
+.av-pick button { width: 36px; height: 36px; border-radius: 10px; border: 2px solid transparent; background: var(--cell); font-size: 20px; padding: 0; }
+.av-pick button[aria-pressed="true"] { border-color: var(--accent); }
+
+/* ---------- Home ---------- */
+.hero { display: grid; gap: 6px; padding-block: 8px 4px; }
+.hero h1 { font-size: clamp(30px, 6vw, 46px); font-weight: 800; }
+.hero p { color: var(--muted); max-width: 60ch; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+.card {
+  display: grid; grid-template-rows: auto 1fr auto; gap: 10px; text-decoration: none; color: var(--ink);
+  background: var(--surface); border-radius: 22px; padding: 16px; box-shadow: var(--shadow);
+  border: 2px solid transparent; transition: transform .15s ease, border-color .15s ease;
+}
+.card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.card h2 { font-size: 24px; }
+.card .skill { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.card p { color: var(--muted); font-size: 14px; }
+.card .rec { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; padding-top: 10px; border-top: 2px dashed var(--line); }
+.card .rec span:last-child { color: var(--accent); }
+.preview { height: 128px; border-radius: 14px; background: var(--cell); display: grid; place-items: center; overflow: hidden; }
+.pv-grid { display: grid; gap: 4px; }
+.pv-grid i { width: 20px; height: 20px; border-radius: 5px; background: var(--surface); display: grid; place-items: center; font: 600 11px/1 var(--body); font-style: normal; color: var(--ink); }
+.pv-grid i.on { background: var(--sun); }
+.pv-row { display: flex; gap: 6px; font-size: 26px; align-items: center; }
+.pv-row .arr { font-size: 14px; color: var(--muted); }
+.pv-spot { display: flex; gap: 8px; }
+.pv-spot svg { width: 96px; height: 72px; border-radius: 8px; }
+.pv-scatter { position: relative; width: 100%; height: 100%; }
+.pv-scatter span { position: absolute; font-size: 20px; transform: translate(-50%, -50%); }
+.tip { font-size: 14px; color: var(--muted); background: var(--surface); border-radius: 16px; padding: 14px 16px; border: 2px dashed var(--line); }
+.tip b { color: var(--ink); }
+
+/* ---------- Game shell ---------- */
+.game { display: grid; gap: 14px; }
+.game-head { display: grid; gap: 6px; }
+.back { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; text-decoration: none; min-height: 40px; width: fit-content; }
+.game-head h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 800; }
+.how { color: var(--muted); max-width: 70ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; align-items: baseline; gap: 6px; background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 14px; color: var(--muted); border: 2px solid var(--line); }
+.pill b { color: var(--ink); font: 800 20px/1 var(--display); font-variant-numeric: tabular-nums; }
+.pill.big { background: var(--sun); border-color: var(--sun); color: var(--sun-ink); }
+.pill.big b { color: var(--sun-ink); font-size: 26px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--surface); border: 2px solid var(--line); border-radius: 12px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: transparent; border-radius: 9px; padding: 6px 12px; min-height: 38px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.seg-label { font-size: 13px; color: var(--muted); }
+.ctl { display: inline-flex; align-items: center; gap: 8px; }
+.check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; min-height: 40px; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.btn { border: 2px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 16px; min-height: 44px; font-weight: 600; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-size: 18px; padding-inline: 24px; }
+.btn:disabled { opacity: .45; cursor: default; }
+.stage { display: grid; justify-items: center; gap: 14px; }
+.msg { min-height: 1.5em; text-align: center; }
+.result { display: grid; gap: 10px; justify-items: center; background: var(--surface); border-radius: 18px; padding: 18px; box-shadow: var(--shadow); text-align: center; }
+.result h2 { font-size: 30px; }
+.result .sub { color: var(--muted); }
+.result .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+/* ---------- Boards (Schulte + memory grid) ---------- */
+.board {
+  width: min(100%, 560px, max(280px, calc(100dvh - 170px))); aspect-ratio: 1; max-width: 100%;
+  display: grid; gap: 6px; container-type: inline-size; position: relative;
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+}
+.board button {
+  border: 0; border-radius: 10px; background: var(--surface); box-shadow: inset 0 -3px 0 var(--line);
+  font: 800 calc(52cqw / var(--n)) / 1 var(--display); color: var(--ink); padding: 0;
+  display: grid; place-items: center; font-variant-numeric: tabular-nums;
+  transition: background .12s ease, transform .08s ease;
+}
+.board button:active { transform: scale(.96); }
+.board.cover button { color: transparent; }
+.board button.found { background: var(--cell); color: var(--muted); box-shadow: none; opacity: .55; }
+.board button.wrong { background: var(--bad); color: #fff; }
+.board button.ok { background: var(--good); color: #fff; }
+.board.dot::after { content: ""; position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--bad); pointer-events: none; box-shadow: 0 0 0 3px var(--surface); }
+.board button.lit { background: var(--sun); box-shadow: inset 0 -3px 0 rgba(0,0,0,.12); }
+.board button.pick { background: var(--accent); box-shadow: none; }
+.board button.hit { background: var(--good); }
+.board button.miss { background: var(--surface); box-shadow: inset 0 0 0 4px var(--good); }
+.board button.bad { background: var(--bad); }
+.board.locked button { cursor: default; }
+.timebar { width: min(100%, 560px, max(280px, calc(100dvh - 170px))); height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.timebar i { display: block; height: 100%; background: var(--sun); width: 100%; transform-origin: left; }
+
+/* ---------- Sequence ---------- */
+.seq-window {
+  width: min(100%, 420px); height: 150px; border-radius: 22px; background: var(--surface); box-shadow: var(--shadow);
+  display: grid; place-items: center; font-size: 96px; line-height: 1; position: relative;
+}
+.seq-window .ghost { font: 600 16px/1.4 var(--body); color: var(--muted); text-align: center; padding: 0 16px; }
+.seq-window .pop { animation: pop .25s ease-out; }
+@keyframes pop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.pads { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 10px; width: min(100%, 520px); }
+.pad {
+  aspect-ratio: 1; border-radius: 20px; border: 3px solid var(--line); background: var(--surface);
+  font-size: clamp(34px, 11vw, 60px); line-height: 1; display: grid; place-items: center; padding: 0;
+  transition: transform .1s ease, border-color .1s ease, background .1s ease; touch-action: manipulation;
+}
+.pad.flash { transform: scale(1.08); border-color: var(--sun); background: var(--sun); }
+.pad.flash-bad { border-color: var(--bad); background: var(--bad); }
+.pad:disabled { cursor: default; }
+.entered { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: 30px; min-height: 42px; }
+.entered span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; background: var(--surface); border: 2px dashed var(--line); }
+.entered span.x { border: 2px solid var(--bad); }
+.answer { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; font-size: 26px; }
+
+/* ---------- Spot the difference ---------- */
+.spot-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+@media (max-width: 700px) { .spot-pair { grid-template-columns: 1fr; } }
+.spot-pair svg { width: 100%; height: auto; display: block; border-radius: 16px; box-shadow: var(--shadow); cursor: crosshair; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.spot-pair .tag { font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.mark-found { fill: none; stroke: #FF3B7F; stroke-width: 3.5; }
+.mark-reveal { fill: none; stroke: #FF3B7F; stroke-width: 2.5; stroke-dasharray: 5 4; }
+.mark-hint { fill: none; stroke: #FFC845; stroke-width: 4; animation: hint 1.6s ease-out forwards; }
+.mark-miss { stroke: #D2413F; stroke-width: 4; stroke-linecap: round; animation: fade .8s ease-out forwards; }
+@keyframes hint { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fade { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---------- Search ---------- */
+.target-card { display: flex; align-items: center; gap: 14px; background: var(--sun); color: var(--sun-ink); border-radius: 18px; padding: 10px 18px; font-weight: 600; }
+.target-card .t { font-size: 56px; line-height: 1; }
+.field {
+  width: min(100%, max(300px, calc((100dvh - 150px) * 4 / 3))); aspect-ratio: 4 / 3; position: relative; overflow: hidden; border-radius: 18px; container-type: inline-size;
+  background: radial-gradient(circle at 20% 30%, rgba(255,200,69,.28), transparent 40%), radial-gradient(circle at 80% 70%, rgba(20,124,119,.22), transparent 45%), var(--surface);
+  box-shadow: var(--shadow); user-select: none; -webkit-user-select: none; touch-action: manipulation;
+}
+.field.hide > span { visibility: hidden; }
+.field > span { position: absolute; line-height: 1; cursor: pointer; transform: translate(-50%, -50%) rotate(var(--r, 0deg)); }
+.field > span.shake { animation: shake .35s; }
+.field > span.win { z-index: 2; outline: 4px solid var(--good); outline-offset: 4px; border-radius: 50%; }
+.field > span.reveal { z-index: 2; outline: 4px dashed var(--bad); outline-offset: 4px; border-radius: 50%; }
+.field .cover { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 16px; color: var(--muted); font-weight: 600; }
+@keyframes shake { 0%,100% { transform: translate(-50%,-50%) rotate(var(--r,0deg)); } 25% { transform: translate(-58%,-50%) rotate(var(--r,0deg)); } 75% { transform: translate(-42%,-50%) rotate(var(--r,0deg)); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+</style>
+
+<div class="app">
+  <header class="top">
+    <a class="brand" href="#"><span class="brand-mark" aria-hidden="true"></span><b>Focus Boost</b></a>
+    <div class="who" id="who"></div>
+  </header>
+  <div id="editor" hidden></div>
+  <main id="main"></main>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* ================= Storage & players ================= */
+const KEY = 'focusboost.v1';
+const AVATARS = ['🦉', '🦊', '🐼', '🐯', '🐸', '🦄', '🐙', '🐝', '🐧', '🦁'];
+function freshData() {
+  return { current: 'a', sound: true, lang: 'ru', log: {}, players: {
+    a: { name: null, avatar: '🦉', s: {} },
+    b: { name: null, avatar: '🦊', s: {} } } };
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && d.players && d.players.a && d.players.b) {
+      d.log = d.log || {};
+      if (d.lang !== 'en' && d.lang !== 'ru') d.lang = 'ru';
+      // Old default names become "unset" so they follow the language.
+      if (d.players.a.name === 'Me') d.players.a.name = null;
+      if (d.players.b.name === 'Daughter') d.players.b.name = null;
+      return d;
+    }
+  } catch (e) {}
+  return freshData();
+}
+let data = load();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {} }
+const P = () => data.players[data.current] || data.players.a;
+const pname = k => data.players[k].name || t(k === 'a' ? 'p1' : 'p2');
+function stat(game) { const s = P().s; return s[game] || (s[game] = {}); }
+function today() { const d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+function logRound() {
+  const k = today();
+  if (!data.log[k]) data.log = { [k]: {} };
+  data.log[k][data.current] = (data.log[k][data.current] || 0) + 1;
+  save(); renderWho();
+}
+const roundsToday = () => (data.log[today()] || {})[data.current] || 0;
+
+/* ================= Text (English + Russian) ================= */
+// Russian plural: 1 раунд, 2 раунда, 5 раундов
+function ru(n, one, few, many) {
+  const a = Math.abs(n) % 100, b = a % 10;
+  if (a > 10 && a < 20) return many;
+  if (b === 1) return one;
+  if (b > 1 && b < 5) return few;
+  return many;
+}
+const en = (n, one, many) => n === 1 ? one : many;
+const TXT = {
+  en: {
+    p1: 'Me', p2: 'Daughter',
+    today: (name, n) => `${name} today: <b>${n}</b> ${en(n, 'round', 'rounds')}`,
+    editPlayers: 'Edit players', sound: 'Sound', langName: 'Language',
+    playerName: k => `Player ${k} name`, avatar: 'Avatar', done: 'Done',
+    back: '← All games', start: 'Start', playAgain: 'Play again', tryAgain: 'Try again', nextRound: 'Next round', easier: 'Easier',
+    best: 'Best', level: 'Level', time: 'Time', mistakes: 'Mistakes', misses: 'Misses', bestLevel: 'Best level', notYet: 'not yet',
+    secs: ms => (ms / 1000).toFixed(1) + 's', sec: n => n + 's',
+    heroTitle: 'Short games for a sharper focus',
+    heroText: 'Pick a game, play a few rounds, then swap players. Every player keeps their own level in each game, and the games get harder as you improve.',
+    tip: '<b>How to practise:</b> 10 minutes a day works better than one long session. Play 2 or 3 different games, and stop while it still feels fun.',
+    // Schulte
+    schTitle: 'Schulte Table', schSkill: 'Visual search',
+    schBlurb: 'Tap the numbers 1, 2, 3… in order as fast as you can. Keep your eyes soft and let them find the next number.',
+    schHow: 'Tap the numbers in order, starting from 1. Try to look at the centre and spot numbers with the edge of your vision instead of reading every cell.',
+    size: 'Size', greyOut: 'Grey out found', centreDot: 'Centre dot', find: 'Find', bestSize: n => `Best ${n}×${n}`,
+    newBest: 'New best time! 🏆', doneIn: tm => 'Done! ' + tm,
+    schSummary: (n, tm, m) => `${n}×${n} in ${tm} with ${m} ${en(m, 'mistake', 'mistakes')}.`, yourBest: tm => ` Your best is ${tm}.`,
+    // Grid
+    gridTitle: 'Memory Grid', gridSkill: 'Visual memory',
+    gridBlurb: 'Some squares light up for a few seconds. Remember where they were and tap the same squares.',
+    gridHow: 'Watch which squares light up. When they go dark, tap the same squares. Get them all right and the grid grows.',
+    lookTime: 'Look time', grid: 'Grid', cells: 'Cells', pressStart: 'Press Start', getReady: 'Get ready…', remember: 'Remember!',
+    tapCells: (c, k) => `Tap ${c} cells · ${k}/${c}`, cellN: i => 'Cell ' + i,
+    gridRec: (s, c) => `${s}×${s}, ${c} cells`,
+    perfect: 'Perfect! ⭐', gridGrows: s => `Level up! The grid grows to ${s}×${s}.`, gridMore: c => `Level up! Next time: ${c} cells.`,
+    gridGot: (h, c) => `You got ${h} of ${c}. Green outlines show the ones you missed.`, goingEasier: ' Going one level easier.',
+    soClose: 'So close!', keepGoing: 'Keep going!',
+    // Sequence
+    seqTitle: 'Sequence Memory', seqSkill: 'Working memory',
+    seqBlurb: 'Shapes appear one after another. Tap them back in exactly the same order. Every win adds one more.',
+    seqHow: 'Watch the shapes appear one by one, then tap them in the same order. Each correct round makes the sequence one longer.',
+    speed: 'Speed', slow: 'Slow', normal: 'Normal', fast: 'Fast', shorter: 'Shorter', length: 'Length',
+    seqIntro: 'Watch the shapes appear, then tap them in the same order.',
+    handsIntro: 'Watch the hands. Copy each pose with your own hand, then tap them in order.',
+    watch: 'Watch…', watchN: (i, n) => `Watch… ${i}/${n}`, yourTurn: 'Your turn! Tap them in order.', yourTurnN: (i, n) => `Your turn · ${i}/${n}`,
+    inARow: n => `${n} in a row`, inARowWin: n => `${n} in a row! ⭐`, nextHas: n => `Next round has ${n}.`,
+    oops: 'Oops, not that one', seqWas: 'The sequence was:',
+    colorNames: ['blue circle', 'yellow square', 'red square', 'green circle', 'purple circle', 'orange square'],
+    handNames: ['open hand', 'thumbs up', 'fist', 'peace', 'one finger', 'OK', 'crossed fingers', 'rock'],
+    // Hands
+    handsTitle: 'Copy the Hands', handsSkill: 'Bonus · body + memory',
+    handsBlurb: 'Hand signs appear in a row. Make each one with your own hand, then tap them back in order.',
+    handsHow: 'Watch the hand signs one by one and copy each pose with your own hand. Then tap them in the same order. Great to do together, facing each other.',
+    // Spot
+    spotTitle: 'Spot the Difference', spotSkill: 'Sustained attention',
+    spotBlurb: 'Two pictures that look the same, but they are not. Find every change, from 5 easy ones up to 20 tiny ones.',
+    spotHow: 'The two pictures have a few differences: a colour, a missing thing, an extra thing or a smaller thing. Tap a difference on either picture.',
+    hint: 'Hint 💡', showAnswers: 'Show answers', newPicture: 'New picture', nextPicture: 'Next picture', found: 'Found',
+    picA: 'Picture A', picB: 'Picture B', diffs: n => `${n} ${en(n, 'difference', 'differences')}`,
+    foundOf: (f, n) => `You found ${f} of ${n}`, dashedRest: 'The dashed circles show the rest.',
+    allFound: 'All found! 🎉',
+    spotSummary: (n, s, m, h) => `${n} differences in ${s}s, ${m} ${en(m, 'miss', 'misses')}, ${h} ${en(h, 'hint', 'hints')}.`,
+    spotUp: n => ` Level up: the next picture has ${n} differences.`, spotStay: ' Finish with no hints and 3 misses or fewer to level up.',
+    // Search
+    searchTitle: 'Find It', searchSkill: 'Selective attention',
+    searchBlurb: 'A busy picture full of animals, fruit and toys. Find the one thing you are looking for before time runs out.',
+    searchHow: 'Look at the item in the yellow card, press Start, and find its only copy in the busy picture before the timer runs out. Look-alikes will try to trick you.',
+    newField: 'New field', timeLeft: 'Time left', items: 'Items', itemsN: n => `${n} items`,
+    findThis: 'Find this one!', exactlyOne: 'There is exactly one hidden in the picture.', lookClosely: 'Look closely at the one you need to find.',
+    foundIt: 'Found it! 🔎', tookS: s => `It took ${s}s. Next level has more to search through.`, nextLevel: 'Next level',
+    timesUp: "Time's up", redCircle: 'The red circle shows where it was hiding.', tryAnother: 'Try another'
+  },
+  ru: {
+    p1: 'Я', p2: 'Дочка',
+    today: (name, n) => `${name} сегодня: <b>${n}</b> ${ru(n, 'раунд', 'раунда', 'раундов')}`,
+    editPlayers: 'Изменить игроков', sound: 'Звук', langName: 'Язык',
+    playerName: k => `Имя игрока ${k}`, avatar: 'Аватар', done: 'Готово',
+    back: '← Все игры', start: 'Старт', playAgain: 'Ещё раз', tryAgain: 'Попробовать ещё', nextRound: 'Следующий раунд', easier: 'Полегче',
+    best: 'Рекорд', level: 'Уровень', time: 'Время', mistakes: 'Ошибки', misses: 'Промахи', bestLevel: 'Лучший уровень', notYet: 'пока нет',
+    secs: ms => (ms / 1000).toFixed(1).replace('.', ',') + ' с', sec: n => n + ' с',
+    heroTitle: 'Короткие игры для внимания',
+    heroText: 'Выбери игру, сыграй пару раундов и передай ход. У каждого игрока свой уровень в каждой игре, и игры становятся сложнее, когда у тебя получается.',
+    tip: '<b>Как заниматься:</b> 10 минут каждый день полезнее, чем одно долгое занятие. Сыграй в 2–3 разные игры и заканчивай, пока ещё интересно.',
+    schTitle: 'Таблица Шульте', schSkill: 'Зрительный поиск',
+    schBlurb: 'Нажимай числа 1, 2, 3… по порядку как можно быстрее. Смотри спокойно и дай глазам самим найти следующее число.',
+    schHow: 'Нажимай числа по порядку, начиная с 1. Старайся смотреть в центр таблицы и замечать числа краем глаза, а не читать каждую клетку.',
+    size: 'Размер', greyOut: 'Закрашивать найденные', centreDot: 'Точка в центре', find: 'Найди', bestSize: n => `Рекорд ${n}×${n}`,
+    newBest: 'Новый рекорд! 🏆', doneIn: tm => 'Готово! ' + tm,
+    schSummary: (n, tm, m) => `${n}×${n} за ${tm}, ошибок: ${m}.`, yourBest: tm => ` Твой рекорд: ${tm}.`,
+    gridTitle: 'Запомни клетки', gridSkill: 'Зрительная память',
+    gridBlurb: 'Несколько клеток загораются на пару секунд. Запомни, где они были, и нажми на те же клетки.',
+    gridHow: 'Смотри, какие клетки загорятся. Когда они погаснут, нажми на те же клетки. Если всё верно, сетка становится больше.',
+    lookTime: 'Время показа', grid: 'Сетка', cells: 'Клетки', pressStart: 'Нажми «Старт»', getReady: 'Приготовься…', remember: 'Запоминай!',
+    tapCells: (c, k) => `Нажми ${c} ${ru(c, 'клетку', 'клетки', 'клеток')} · ${k}/${c}`, cellN: i => 'Клетка ' + i,
+    gridRec: (s, c) => `${s}×${s}, ${c} ${ru(c, 'клетка', 'клетки', 'клеток')}`,
+    perfect: 'Отлично! ⭐', gridGrows: s => `Новый уровень! Сетка становится ${s}×${s}.`, gridMore: c => `Новый уровень! Дальше: ${c} ${ru(c, 'клетка', 'клетки', 'клеток')}.`,
+    gridGot: (h, c) => `Угадано ${h} из ${c}. Зелёной рамкой отмечены пропущенные.`, goingEasier: ' Уровень стал чуть легче.',
+    soClose: 'Почти получилось!', keepGoing: 'Не сдавайся!',
+    seqTitle: 'Запомни порядок', seqSkill: 'Рабочая память',
+    seqBlurb: 'Фигуры появляются одна за другой. Повтори их в том же порядке. После каждой победы добавляется ещё одна.',
+    seqHow: 'Смотри, как появляются фигуры, потом нажми их в том же порядке. После каждого верного раунда цепочка становится на одну длиннее.',
+    speed: 'Скорость', slow: 'Медленно', normal: 'Обычно', fast: 'Быстро', shorter: 'Короче', length: 'Длина',
+    seqIntro: 'Смотри, как появляются фигуры, потом нажми их в том же порядке.',
+    handsIntro: 'Смотри на руки. Повторяй каждый жест своей рукой, потом нажми их по порядку.',
+    watch: 'Смотри…', watchN: (i, n) => `Смотри… ${i}/${n}`, yourTurn: 'Твоя очередь! Нажимай по порядку.', yourTurnN: (i, n) => `Твоя очередь · ${i}/${n}`,
+    inARow: n => `${n} подряд`, inARowWin: n => `${n} подряд! ⭐`, nextHas: n => `В следующем раунде: ${n}.`,
+    oops: 'Ой, не то', seqWas: 'Правильный порядок:',
+    colorNames: ['синий круг', 'жёлтый квадрат', 'красный квадрат', 'зелёный круг', 'фиолетовый круг', 'оранжевый квадрат'],
+    handNames: ['ладонь', 'класс', 'кулак', 'мир', 'один палец', 'окей', 'скрещённые пальцы', 'коза'],
+    handsTitle: 'Повтори жесты', handsSkill: 'Бонус · тело и память',
+    handsBlurb: 'Жесты появляются по очереди. Покажи каждый своей рукой, потом нажми их в том же порядке.',
+    handsHow: 'Смотри на жесты по одному и повторяй каждый своей рукой. Потом нажми их в том же порядке. Здорово играть вдвоём, сидя друг напротив друга.',
+    spotTitle: 'Найди отличия', spotSkill: 'Устойчивое внимание',
+    spotBlurb: 'Две картинки кажутся одинаковыми, но это не так. Найди все отличия: от 5 простых до 20 крошечных.',
+    spotHow: 'На картинках есть отличия: другой цвет, чего-то не хватает, что-то лишнее или что-то стало меньше. Нажми на отличие на любой из картинок.',
+    hint: 'Подсказка 💡', showAnswers: 'Показать ответы', newPicture: 'Новая картинка', nextPicture: 'Следующая картинка', found: 'Найдено',
+    picA: 'Картинка А', picB: 'Картинка Б', diffs: n => `${n} ${ru(n, 'отличие', 'отличия', 'отличий')}`,
+    foundOf: (f, n) => `Найдено ${f} из ${n}`, dashedRest: 'Пунктирные круги показывают остальные.',
+    allFound: 'Все найдены! 🎉',
+    spotSummary: (n, s, m, h) => `${n} ${ru(n, 'отличие', 'отличия', 'отличий')} за ${s} с. Промахов: ${m}, подсказок: ${h}.`,
+    spotUp: n => ` Новый уровень: на следующей картинке ${n} ${ru(n, 'отличие', 'отличия', 'отличий')}.`,
+    spotStay: ' Чтобы перейти на новый уровень, найди всё без подсказок и максимум с 3 промахами.',
+    searchTitle: 'Найди предмет', searchSkill: 'Избирательное внимание',
+    searchBlurb: 'Пёстрая картинка со зверями, фруктами и игрушками. Найди нужный предмет, пока не вышло время.',
+    searchHow: 'Посмотри на предмет в жёлтой карточке, нажми «Старт» и найди его на картинке, пока не вышло время. Он там ровно один. Похожие предметы будут тебя путать.',
+    newField: 'Новое поле', timeLeft: 'Осталось', items: 'Предметы', itemsN: n => `${n} ${ru(n, 'предмет', 'предмета', 'предметов')}`,
+    findThis: 'Найди вот это!', exactlyOne: 'На картинке он спрятан ровно один раз.', lookClosely: 'Хорошо запомни, что нужно найти.',
+    foundIt: 'Найдено! 🔎', tookS: s => `Понадобилось ${s} с. На следующем уровне предметов больше.`, nextLevel: 'Следующий уровень',
+    timesUp: 'Время вышло', redCircle: 'Красный круг показывает, где он прятался.', tryAnother: 'Другое поле'
+  }
+};
+function t(key, ...args) {
+  const v = key in TXT[data.lang] ? TXT[data.lang][key] : TXT.en[key];
+  return typeof v === 'function' ? v(...args) : v;
+}
+
+/* ================= Helpers ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+const rand = (a, b) => a + Math.random() * (b - a);
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const secs = ms => t('secs', ms);
+
+// Every timer goes through here so leaving a game stops all of them.
+const timers = new Set();
+let run = 0;
+function later(fn, ms) { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; }
+function every(fn, ms) { const id = setInterval(fn, ms); timers.add(id); return id; }
+function stop(id) { clearTimeout(id); clearInterval(id); timers.delete(id); }
+function teardown() { timers.forEach(id => { clearTimeout(id); clearInterval(id); }); timers.clear(); run++; }
+const wait = ms => new Promise(r => later(r, ms));
+
+let ac = null;
+function beep(freq = 520, dur = .15, type = 'sine') {
+  if (!data.sound) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') ac.resume();
+    const o = ac.createOscillator(), g = ac.createGain(), now = ac.currentTime;
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(.0001, now);
+    g.gain.exponentialRampToValueAtTime(.18, now + .02);
+    g.gain.exponentialRampToValueAtTime(.0001, now + dur);
+    o.connect(g); g.connect(ac.destination); o.start(now); o.stop(now + dur + .05);
+  } catch (e) {}
+}
+const good = () => beep(760, .12);
+const bad = () => beep(180, .22, 'triangle');
+const fanfare = () => { [523, 659, 784, 1046].forEach((f, i) => later(() => beep(f, .16), i * 110)); };
+
+/* ================= Header: players, sound, language ================= */
+function renderWho() {
+  document.documentElement.lang = data.lang;
+  const w = $('#who'), n = roundsToday();
+  w.innerHTML = ['a', 'b'].map(k => `<button class="player" data-player="${k}" aria-pressed="${k === data.current}"><span class="av">${esc(data.players[k].avatar)}</span>${esc(pname(k))}</button>`).join('') +
+  `<button class="icon-btn" id="edit-btn" aria-label="${t('editPlayers')}" title="${t('editPlayers')}">✏️</button>` +
+  `<button class="icon-btn" id="sound-btn" aria-label="${t('sound')}" aria-pressed="${data.sound}" title="${t('sound')}">${data.sound ? '🔊' : '🔇'}</button>` +
+  `<span class="lang" role="group" aria-label="${t('langName')}"><button data-lang="ru" aria-pressed="${data.lang === 'ru'}">RU</button><button data-lang="en" aria-pressed="${data.lang === 'en'}">EN</button></span>` +
+  `<span class="today">${t('today', esc(pname(data.current)), n)}</span>`;
+}
+$('#who').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.player) {
+    if (b.dataset.player === data.current) return;
+    data.current = b.dataset.player; save(); renderWho(); route();
+  } else if (b.dataset.lang) {
+    if (b.dataset.lang === data.lang) return;
+    data.lang = b.dataset.lang; save(); renderWho(); route();
+    if (!$('#editor').hidden) renderEditor();
+  } else if (b.id === 'sound-btn') {
+    data.sound = !data.sound; save(); renderWho(); if (data.sound) good();
+  } else if (b.id === 'edit-btn') {
+    const ed = $('#editor'); ed.hidden = !ed.hidden; if (!ed.hidden) renderEditor();
+  }
+});
+function renderEditor() {
+  const ed = $('#editor');
+  ed.innerHTML = `<form class="edit-players" id="edit-form">` + ['a', 'b'].map((k, i) => {
+    const p = data.players[k];
+    return `<label>${t('playerName', i + 1)}<input id="name-${k}" maxlength="16" value="${esc(pname(k))}"></label>
+      <div class="av-pick" data-for="${k}" aria-label="${t('avatar')}">${AVATARS.map(a => `<button type="button" data-av="${a}" aria-pressed="${a === p.avatar}">${a}</button>`).join('')}</div>`;
+  }).join('') + `<button class="btn primary" type="submit">${t('done')}</button></form>`;
+  $('#edit-form').addEventListener('click', e => {
+    const b = e.target.closest('[data-av]'); if (!b) return;
+    const k = b.parentElement.dataset.for;
+    data.players[k].avatar = b.dataset.av; save();
+    b.parentElement.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    renderWho();
+  });
+  $('#edit-form').addEventListener('submit', e => {
+    e.preventDefault();
+    ['a', 'b'].forEach(k => {
+      const v = $('#name-' + k).value.trim(), def = t(k === 'a' ? 'p1' : 'p2');
+      if (v) data.players[k].name = v === def ? null : v;
+    });
+    save(); ed.hidden = true; renderWho(); route();
+  });
+}
+
+/* ================= Game shell ================= */
+function shell(g) {
+  $('#main').innerHTML = `<section class="game">
+    <div class="game-head"><a class="back" href="#">${t('back')}</a><h1>${t(g.id + 'Title')}</h1><p class="how">${t(g.id + 'How')}</p></div>
+    <div class="bar" id="bar"></div>
+    <div class="controls" id="controls"></div>
+    <div class="stage" id="stage"></div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+  </section>`;
+  return { bar: $('#bar'), controls: $('#controls'), stage: $('#stage'), msg: $('#msg') };
+}
+function pills(el, items) {
+  el.innerHTML = items.map(([label, val, id, big]) => `<span class="pill${big ? ' big' : ''}">${label} <b${id ? ` id="${id}"` : ''}>${val}</b></span>`).join('');
+}
+function seg(label, id, options, current) {
+  return `<span class="ctl"><span class="seg-label">${label}</span><span class="seg" id="${id}" role="group" aria-label="${label}">${
+    options.map(([v, txt]) => `<button type="button" data-v="${v}" aria-pressed="${String(v) === String(current)}">${txt}</button>`).join('')}</span></span>`;
+}
+function onSeg(id, fn) {
+  $('#' + id).addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    $('#' + id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    fn(b.dataset.v);
+  });
+}
+function result(ctx, title, sub, buttons) {
+  ctx.msg.innerHTML = `<div class="result"><h2>${title}</h2>${sub ? `<p class="sub">${sub}</p>` : ''}<div class="row">${
+    buttons.map((b, i) => `<button class="btn${i === 0 ? ' primary' : ''}" data-i="${i}">${b[0]}</button>`).join('')}</div></div>`;
+  ctx.msg.querySelectorAll('[data-i]').forEach(el => el.addEventListener('click', () => { ctx.msg.innerHTML = ''; buttons[+el.dataset.i][1](); }));
+  const first = ctx.msg.querySelector('.btn'); if (first) first.focus({ preventScroll: true });
+  ctx.msg.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+/* ================= 1. Schulte table ================= */
+function schulte(ctx) {
+  const st = stat('schulte'); st.best = st.best || {};
+  let n = st.size || 5, mark = st.mark !== false, dot = !!st.dot;
+  let next, t0, tick, mistakes, playing = false;
+  ctx.controls.innerHTML = seg(t('size'), 'sz', [[3, '3×3'], [4, '4×4'], [5, '5×5'], [6, '6×6'], [7, '7×7']], n) +
+    `<label class="check"><input type="checkbox" id="sch-mark" ${mark ? 'checked' : ''}> ${t('greyOut')}</label>
+     <label class="check"><input type="checkbox" id="sch-dot" ${dot ? 'checked' : ''}> ${t('centreDot')}</label>`;
+  onSeg('sz', v => { n = +v; st.size = n; save(); ready(); });
+  $('#sch-mark').addEventListener('change', e => { mark = e.target.checked; st.mark = mark; save(); });
+  $('#sch-dot').addEventListener('change', e => { dot = e.target.checked; st.dot = dot; save(); $('.board').classList.toggle('dot', dot); });
+
+  function bar() {
+    const best = st.best[n];
+    pills(ctx.bar, [[t('find'), playing ? next : 1, 'sch-next', true], [t('time'), secs(0), 'sch-time'], [t('mistakes'), mistakes || 0, 'sch-miss'], [t('bestSize', n), best ? secs(best) : '—']]);
+  }
+  function ready() {
+    if (tick) stop(tick);
+    playing = false; mistakes = 0; ctx.msg.innerHTML = '';
+    bar();
+    const nums = Array.from({ length: n * n }, (_, i) => i + 1);
+    ctx.stage.innerHTML = `<div class="board cover${dot ? ' dot' : ''}" id="sch-board" style="--n:${n};grid-template-columns:repeat(${n},1fr)">${nums.map(k => `<button data-k="${k}">${k}</button>`).join('')}</div>
+      <button class="btn primary" id="sch-go">${t('start')}</button>`;
+    $('#sch-go').addEventListener('click', begin);
+  }
+  function begin() {
+    const nums = shuffle(Array.from({ length: n * n }, (_, i) => i + 1));
+    const board = $('#sch-board');
+    board.classList.remove('cover');
+    board.innerHTML = nums.map(k => `<button data-k="${k}" aria-label="${k}">${k}</button>`).join('');
+    $('#sch-go').remove();
+    next = 1; mistakes = 0; playing = true; t0 = performance.now(); bar();
+    board.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    tick = every(() => { const el = $('#sch-time'); if (el) el.textContent = secs(performance.now() - t0); }, 100);
+    board.addEventListener('pointerdown', onTap);
+  }
+  function onTap(e) {
+    const b = e.target.closest('button[data-k]'); if (!b || !playing) return;
+    e.preventDefault();
+    const k = +b.dataset.k;
+    if (k === next) {
+      good();
+      if (mark) b.classList.add('found'); else { b.classList.add('ok'); later(() => b.classList.remove('ok'), 180); }
+      next++;
+      $('#sch-next').textContent = next > n * n ? '✓' : next;
+      if (next > n * n) finish();
+    } else if (k > next || !mark) {
+      bad(); mistakes++; $('#sch-miss').textContent = mistakes;
+      b.classList.add('wrong'); later(() => b.classList.remove('wrong'), 300);
+    }
+  }
+  function finish() {
+    playing = false; stop(tick);
+    const ms = performance.now() - t0;
+    $('#sch-time').textContent = secs(ms);
+    const prev = st.best[n], record = !prev || ms < prev;
+    if (record) st.best[n] = Math.round(ms);
+    save(); logRound(); fanfare();
+    result(ctx, record ? t('newBest') : t('doneIn', secs(ms)),
+      t('schSummary', n, secs(ms), mistakes) + (prev && !record ? t('yourBest', secs(prev)) : ''),
+      [[t('playAgain'), ready]]);
+  }
+  ready();
+}
+
+/* ================= 2. Visual memory grid ================= */
+const GRID_LEVELS = [[3, 3], [3, 4], [4, 4], [4, 5], [4, 6], [5, 6], [5, 7], [5, 8], [5, 9], [6, 9], [6, 10], [6, 11], [6, 12], [6, 13], [6, 14], [7, 14], [7, 16], [7, 18]];
+function gridLevel(L) { return GRID_LEVELS[Math.min(L, GRID_LEVELS.length) - 1]; }
+function memoryGrid(ctx) {
+  const st = stat('grid');
+  let L = st.level || 1, showS = st.show || 5, fails = 0;
+  let size, count, targets, picked, phase = 'idle';
+  ctx.controls.innerHTML = seg(t('lookTime'), 'look', [[3, t('sec', 3)], [5, t('sec', 5)], [8, t('sec', 8)], [10, t('sec', 10)]], showS) +
+    `<button class="btn" id="g-down">${t('easier')}</button>`;
+  onSeg('look', v => { showS = +v; st.show = showS; save(); });
+  $('#g-down').addEventListener('click', () => { if (L > 1) { L--; st.level = L; save(); ready(); } });
+
+  function bar(txt) {
+    pills(ctx.bar, [[t('level'), L, null, true], [t('grid'), size + '×' + size], [t('cells'), count], [t('bestLevel'), st.best || 1], ['', txt || '', 'g-state']]);
+  }
+  let myRun;
+  function ready() {
+    run++; myRun = run; ctx.msg.innerHTML = '';
+    [size, count] = gridLevel(L); phase = 'idle'; bar(t('pressStart'));
+    ctx.stage.innerHTML = `<div class="timebar"><i id="g-time" style="transform:scaleX(1)"></i></div>
+      <div class="board locked" id="g-board" style="--n:${size};grid-template-columns:repeat(${size},1fr)">${Array.from({ length: size * size }, (_, i) => `<button data-i="${i}" aria-label="${t('cellN', i + 1)}"></button>`).join('')}</div>
+      <button class="btn primary" id="g-go">${t('start')}</button>`;
+    $('#g-go').addEventListener('click', show);
+    $('#g-board').addEventListener('pointerdown', onTap);
+  }
+  async function show() {
+    const me = myRun;
+    $('#g-go').remove();
+    $('#g-board').scrollIntoView({ block: 'end', behavior: 'smooth' });
+    targets = new Set(shuffle(Array.from({ length: size * size }, (_, i) => i)).slice(0, count));
+    picked = new Set(); phase = 'wait';
+    $('#g-state').textContent = t('getReady');
+    await wait(700); if (me !== run) return;
+    phase = 'show'; $('#g-state').textContent = t('remember');
+    cells().forEach((c, i) => c.classList.toggle('lit', targets.has(i)));
+    const tb = $('#g-time');
+    tb.style.transition = 'none'; tb.style.transform = 'scaleX(1)';
+    void tb.offsetWidth;
+    tb.style.transition = `transform ${showS}s linear`; tb.style.transform = 'scaleX(0)';
+    await wait(showS * 1000); if (me !== run) return;
+    cells().forEach(c => c.classList.remove('lit'));
+    phase = 'recall'; $('#g-board').classList.remove('locked');
+    $('#g-state').textContent = t('tapCells', count, 0);
+  }
+  const cells = () => [...$('#g-board').children];
+  function onTap(e) {
+    const b = e.target.closest('button[data-i]'); if (!b || phase !== 'recall') return;
+    e.preventDefault();
+    const i = +b.dataset.i;
+    if (picked.has(i)) { picked.delete(i); b.classList.remove('pick'); }
+    else { picked.add(i); b.classList.add('pick'); beep(620, .08); }
+    $('#g-state').textContent = t('tapCells', count, picked.size);
+    if (picked.size === count) { phase = 'check'; later(check, 250); }
+  }
+  function check() {
+    $('#g-board').classList.add('locked');
+    let hits = 0;
+    cells().forEach((c, i) => {
+      c.classList.remove('pick');
+      if (targets.has(i) && picked.has(i)) { c.classList.add('hit'); hits++; }
+      else if (targets.has(i)) c.classList.add('miss');
+      else if (picked.has(i)) c.classList.add('bad');
+    });
+    logRound();
+    if (hits === count) {
+      fanfare(); fails = 0; L++; st.level = L; st.best = Math.max(st.best || 1, L); save();
+      const [ns, nc] = gridLevel(L);
+      result(ctx, t('perfect'), ns > size ? t('gridGrows', ns) : t('gridMore', nc), [[t('nextRound'), ready]]);
+    } else {
+      bad(); fails++;
+      let note = t('gridGot', hits, count);
+      if (fails >= 2 && L > 1) { L--; fails = 0; note += t('goingEasier'); }
+      st.level = L; save();
+      result(ctx, hits >= count - 1 ? t('soClose') : t('keepGoing'), note, [[t('tryAgain'), ready]]);
+    }
+  }
+  ready();
+}
+
+/* ================= 3. Sequence memory (colours + hands) ================= */
+const SKINS = {
+  colors: { items: ['🔵', '🟨', '🟥', '🟢', '🟣', '🟧'], names: 'colorNames', intro: 'seqIntro', tones: [330, 392, 494, 587, 659, 784] },
+  hands: { items: ['✋', '👍', '✊', '✌️', '☝️', '👌', '🤞', '🤘'], names: 'handNames', intro: 'handsIntro', tones: [262, 330, 392, 440, 523, 587, 659, 784] }
+};
+function sequence(ctx, skinKey) {
+  const skin = SKINS[skinKey], st = stat(skinKey === 'hands' ? 'hands' : 'seq');
+  let len = st.len || 3, speed = st.speed || 800, fails = 0;
+  let seq = [], pos = 0, phase = 'idle', nItems;
+  ctx.controls.innerHTML = seg(t('speed'), 'spd', [[1100, t('slow')], [800, t('normal')], [550, t('fast')]], speed) + `<button class="btn" id="s-down">${t('shorter')}</button>`;
+  onSeg('spd', v => { speed = +v; st.speed = speed; save(); });
+  $('#s-down').addEventListener('click', () => { if (len > 2) { len--; st.len = len; save(); ready(); } });
+
+  function itemCount() { return skinKey === 'hands' ? (len < 5 ? 4 : len < 7 ? 6 : 8) : (len < 7 ? 4 : 6); }
+  function bar(txt) { pills(ctx.bar, [[t('length'), len, null, true], [t('best'), st.best || '—'], ['', txt || '', 's-state']]); }
+  function ready() {
+    run++; ctx.msg.innerHTML = ''; phase = 'idle'; nItems = itemCount(); bar(t('pressStart'));
+    const cols = nItems <= 4 ? 4 : nItems === 6 ? 3 : 4, names = t(skin.names);
+    ctx.stage.innerHTML = `<div class="seq-window" id="s-win"><span class="ghost">${t(skin.intro)}</span></div>
+      <div class="entered" id="s-entered"></div>
+      <div class="pads" style="--cols:${cols}">${skin.items.slice(0, nItems).map((it, i) => `<button class="pad" data-i="${i}" aria-label="${names[i]}" disabled>${it}</button>`).join('')}</div>
+      <button class="btn primary" id="s-go">${t('start')}</button>`;
+    $('#s-go').addEventListener('click', play);
+    ctx.stage.querySelector('.pads').addEventListener('pointerdown', onTap);
+  }
+  const pads = () => [...ctx.stage.querySelectorAll('.pad')];
+  async function play() {
+    const me = run;
+    $('#s-go').remove();
+    seq = []; for (let i = 0; i < len; i++) { let x; do { x = rnd(nItems); } while (i && x === seq[i - 1]); seq.push(x); }
+    phase = 'watch'; $('#s-state').textContent = t('watch');
+    const win = $('#s-win'); win.innerHTML = '';
+    await wait(600); if (me !== run) return;
+    for (let i = 0; i < seq.length; i++) {
+      const k = seq[i], pad = pads()[k];
+      win.innerHTML = `<span class="pop">${skin.items[k]}</span>`;
+      $('#s-state').textContent = t('watchN', i + 1, len);
+      pad.classList.add('flash'); beep(skin.tones[k], speed * .5 / 1000);
+      await wait(speed * .62); if (me !== run) return;
+      pad.classList.remove('flash'); win.innerHTML = '';
+      await wait(speed * .38); if (me !== run) return;
+    }
+    win.innerHTML = `<span class="ghost">${t('yourTurn')}</span>`;
+    phase = 'input'; pos = 0; pads().forEach(p => p.disabled = false);
+    $('#s-state').textContent = t('yourTurnN', 0, len);
+    $('#s-entered').innerHTML = seq.map(() => '<span></span>').join('');
+  }
+  function onTap(e) {
+    const b = e.target.closest('.pad'); if (!b || phase !== 'input') return;
+    e.preventDefault();
+    const k = +b.dataset.i, slot = $('#s-entered').children[pos];
+    slot.textContent = skin.items[k];
+    if (k === seq[pos]) {
+      beep(skin.tones[k], .15); b.classList.add('flash'); later(() => b.classList.remove('flash'), 160);
+      pos++; $('#s-state').textContent = t('yourTurnN', pos, len);
+      if (pos === len) winRound();
+    } else {
+      slot.classList.add('x'); b.classList.add('flash-bad'); later(() => b.classList.remove('flash-bad'), 300);
+      lose();
+    }
+  }
+  function end() { phase = 'done'; pads().forEach(p => p.disabled = true); logRound(); }
+  function winRound() {
+    end(); fanfare(); fails = 0;
+    const done = len; len++; st.len = len; st.best = Math.max(st.best || 0, done); save();
+    result(ctx, t('inARowWin', done), t('nextHas', len), [[t('nextRound'), ready]]);
+  }
+  function lose() {
+    end(); bad(); fails++;
+    if (fails >= 2 && len > 2) { len--; fails = 0; st.len = len; save(); }
+    const ans = `<span class="answer">${seq.map(k => skin.items[k]).join('<span aria-hidden="true">→</span>')}</span>`;
+    result(ctx, t('oops'), `${t('seqWas')}<br>${ans}`, [[t('tryAgain'), ready]]);
+  }
+  ready();
+}
+
+/* ================= 4. Spot the difference ================= */
+const COL = { red: '#E0452B', blue: '#2767C9', purple: '#8B4FC4', yellow: '#F5C518', pink: '#F07AB6', white: '#FFFFFF', green: '#2E9E5B', orange: '#EB8A1C', teal: '#12A39A' };
+const BRIGHT = ['red', 'blue', 'purple', 'yellow', 'pink', 'teal'];
+const SKY_TYPES = ['sun', 'cloud', 'balloon', 'bird', 'star', 'kite'];
+const GROUND_TYPES = ['house', 'tree', 'flower', 'car', 'mushroom', 'tree', 'flower', 'house'];
+function starPts(R, r) { let p = []; for (let i = 0; i < 10; i++) { const a = Math.PI / 5 * i - Math.PI / 2, rr = i % 2 ? r : R; p.push((Math.cos(a) * rr).toFixed(1) + ',' + (Math.sin(a) * rr).toFixed(1)); } return p.join(' '); }
+const DRAW = {
+  sun: c => `<circle r="22" fill="${c}"/>` + [0, 45, 90, 135, 180, 225, 270, 315].map(a => `<line y1="-30" y2="-44" stroke="${c}" stroke-width="7" stroke-linecap="round" transform="rotate(${a})"/>`).join(''),
+  cloud: c => `<g fill="${c}"><ellipse cx="-20" cy="8" rx="24" ry="16"/><ellipse cx="18" cy="8" rx="26" ry="17"/><ellipse cx="-2" cy="-8" rx="24" ry="21"/></g>`,
+  balloon: c => `<path d="M0,22 q6,12 -2,26" stroke="#555" stroke-width="2" fill="none"/><ellipse cy="-6" rx="21" ry="27" fill="${c}"/><ellipse cx="-8" cy="-15" rx="5" ry="9" fill="#fff" opacity=".45"/><path d="M-4,21 h8 l-4,5z" fill="${c}"/>`,
+  bird: c => `<path d="M-34,2 Q-17,-20 0,2 Q17,-20 34,2" fill="none" stroke="${c}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>`,
+  star: c => `<polygon points="${starPts(40, 17)}" fill="${c}"/>`,
+  kite: c => `<polygon points="0,-40 26,-4 0,30 -26,-4" fill="${c}"/><line x1="0" y1="-40" x2="0" y2="30" stroke="#fff" stroke-width="2" opacity=".6"/><path d="M0,30 q10,8 0,14 q-10,6 0,14" stroke="#555" stroke-width="2.5" fill="none"/>`,
+  house: c => `<rect x="-32" y="-6" width="64" height="48" fill="${c}"/><polygon points="-42,-4 0,-44 42,-4" fill="#7A3B2E"/><rect x="-9" y="16" width="18" height="26" fill="#5A3A22"/><rect x="-27" y="2" width="14" height="14" fill="#CDEBFF" stroke="#fff" stroke-width="2"/><rect x="13" y="2" width="14" height="14" fill="#CDEBFF" stroke="#fff" stroke-width="2"/>`,
+  tree: c => `<rect x="-7" y="6" width="14" height="38" fill="#7A4E2A"/><circle cy="-14" r="30" fill="${c}"/><circle cx="-18" cy="0" r="18" fill="${c}"/><circle cx="18" cy="0" r="18" fill="${c}"/>`,
+  flower: c => `<path d="M0,6 V46" stroke="#2E7D32" stroke-width="5"/><ellipse cx="10" cy="32" rx="10" ry="5" fill="#2E7D32" transform="rotate(-30 10 32)"/>` + [0, 72, 144, 216, 288].map(a => `<circle cy="-16" r="13" fill="${c}" transform="rotate(${a} 0 -6)" />`).join('') + `<circle cy="-6" r="9" fill="#F5C518"/>`,
+  car: c => `<path d="M-44,20 V2 Q-44,-4 -38,-4 H-22 L-12,-22 H16 L28,-4 H38 Q44,-4 44,2 V20Z" fill="${c}"/><path d="M-9,-17 H4 V-5 H-17Z M9,-17 H14 L22,-5 H9Z" fill="#CDEBFF"/><circle cx="-24" cy="20" r="11" fill="#222"/><circle cx="24" cy="20" r="11" fill="#222"/><circle cx="-24" cy="20" r="4" fill="#bbb"/><circle cx="24" cy="20" r="4" fill="#bbb"/>`,
+  mushroom: c => `<path d="M-12,0 H12 L15,40 H-15Z" fill="#F4E4C8"/><path d="M-40,4 A40,38 0 0 1 40,4Z" fill="${c}"/><circle cx="-18" cy="-12" r="6" fill="#fff"/><circle cx="8" cy="-22" r="7" fill="#fff"/><circle cx="22" cy="-6" r="5" fill="#fff"/>`
+};
+function baseColor(type) {
+  if (type === 'sun') return COL.yellow;
+  if (type === 'cloud') return COL.white;
+  if (type === 'tree') return COL.green;
+  if (type === 'bird') return '#333A40';
+  return COL[pick(BRIGHT)];
+}
+function otherColor(type, c) {
+  if (type === 'sun') return COL.red;
+  if (type === 'cloud') return COL.pink;
+  if (type === 'tree') return COL.orange;
+  if (type === 'bird') return COL.red;
+  return COL[pick(BRIGHT.filter(k => COL[k] !== c))];
+}
+// [columns, rows, differences]
+const SPOT_LEVELS = [[4, 3, 5], [5, 3, 6], [5, 4, 7], [6, 4, 8], [6, 5, 10], [7, 5, 12], [8, 5, 14], [8, 6, 16], [9, 6, 18], [10, 7, 20]];
+function makeScene(L) {
+  const [cols, rows, nd] = SPOT_LEVELS[Math.min(L, SPOT_LEVELS.length) - 1];
+  const W = 400, H = 300, cw = W / cols, ch = H / rows, skyRows = Math.max(1, Math.round(rows * .4));
+  const cells = [];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) cells.push({ r, c });
+  shuffle(cells);
+  const empty = Math.max(2, Math.round(cells.length * .15));
+  const objs = [], spare = [];
+  cells.forEach((cell, i) => {
+    const sky = cell.r < skyRows;
+    const size = Math.min(cw, ch) * rand(.62, .76);
+    const slack = (Math.min(cw, ch) - size) / 2;
+    const o = { type: pick(sky ? SKY_TYPES : GROUND_TYPES), x: (cell.c + .5) * cw + rand(-slack, slack) * .7, y: (cell.r + .5) * ch + rand(-slack, slack) * .7, s: size, flip: Math.random() < .5 };
+    o.c = baseColor(o.type);
+    if (sky && objs.some(p => p.type === 'sun') && o.type === 'sun') o.type = 'cloud', o.c = COL.white;
+    (i < empty ? spare : objs).push(o);
+  });
+  // Pick which objects change; each difference sits in its own cell so none hide each other.
+  const diffs = [];
+  const pool = shuffle(objs.slice());
+  for (let k = 0; k < nd; k++) {
+    let kind = pick(['color', 'color', 'color', 'remove', 'remove', 'size', 'add']);
+    if (kind === 'add' && !spare.length) kind = 'color';
+    if (kind === 'add') { const o = spare.pop(); diffs.push({ kind, o, x: o.x, y: o.y, r: o.s * .62 }); continue; }
+    const o = pool.pop(); if (!o) break;
+    diffs.push({ kind, o, x: o.x, y: o.y, r: o.s * .62, c2: kind === 'color' ? otherColor(o.type, o.c) : null });
+  }
+  const side = Math.random() < .5 ? 0 : 1;
+  diffs.forEach(d => d.side = Math.random() < .5 ? side : 1 - side);
+  return { W, H, objs, diffs, skyH: skyRows * ch };
+}
+function drawObj(o, color, scale) {
+  const k = o.s / 100 * (scale || 1);
+  return `<g transform="translate(${o.x.toFixed(1)} ${o.y.toFixed(1)}) scale(${(o.flip ? -k : k).toFixed(3)} ${k.toFixed(3)})">${DRAW[o.type](color)}</g>`;
+}
+function renderScene(sc, sideIdx) {
+  const byObj = new Map(sc.diffs.map(d => [d.o, d]));
+  let body = '';
+  const all = sc.objs.concat(sc.diffs.filter(d => d.kind === 'add').map(d => d.o));
+  for (const o of all) {
+    const d = byObj.get(o), changed = d && d.side === sideIdx;
+    if (!d) { body += drawObj(o, o.c); continue; }
+    if (d.kind === 'add') { if (changed) body += drawObj(o, o.c); continue; }
+    if (d.kind === 'remove') { if (!changed) body += drawObj(o, o.c); continue; }
+    if (d.kind === 'color') { body += drawObj(o, changed ? d.c2 : o.c); continue; }
+    if (d.kind === 'size') { body += drawObj(o, o.c, changed ? .58 : 1); continue; }
+  }
+  return `<svg viewBox="0 0 ${sc.W} ${sc.H}" role="img" aria-label="${t(sideIdx ? 'picB' : 'picA')}" data-side="${sideIdx}">
+    <defs><linearGradient id="sky${sideIdx}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FD3F4"/><stop offset="1" stop-color="#D9F1FB"/></linearGradient></defs>
+    <rect width="${sc.W}" height="${sc.H}" fill="url(#sky${sideIdx})"/>
+    <path d="M0,${sc.skyH} Q100,${sc.skyH - 14} 200,${sc.skyH} T400,${sc.skyH} V${sc.H} H0Z" fill="#9CD67A"/>
+    <path d="M0,${sc.skyH + 18} Q120,${sc.skyH + 8} 260,${sc.skyH + 22} T400,${sc.skyH + 16} V${sc.H} H0Z" fill="#86C865"/>
+    ${body}<g class="marks"></g></svg>`;
+}
+function spot(ctx) {
+  const st = stat('spot');
+  let L = st.level || 1, sc, found, mistakes, hints, t0, tick, playing;
+  ctx.controls.innerHTML = `<button class="btn" id="sp-hint">${t('hint')}</button><button class="btn" id="sp-reveal">${t('showAnswers')}</button><button class="btn" id="sp-new">${t('newPicture')}</button><button class="btn" id="sp-down">${t('easier')}</button>`;
+  $('#sp-hint').addEventListener('click', hint);
+  $('#sp-reveal').addEventListener('click', reveal);
+  $('#sp-new').addEventListener('click', ready);
+  $('#sp-down').addEventListener('click', () => { if (L > 1) { L--; st.level = L; save(); ready(); } });
+  function bar() {
+    pills(ctx.bar, [[t('found'), `${found.size}/${sc.diffs.length}`, 'sp-found', true], [t('level'), L], [t('time'), t('sec', 0), 'sp-time'], [t('misses'), mistakes, 'sp-miss'], [t('bestLevel'), st.best || 1]]);
+  }
+  function ready() {
+    if (tick) stop(tick);
+    ctx.msg.innerHTML = '';
+    sc = makeScene(L); found = new Set(); mistakes = 0; hints = 0; playing = true; t0 = performance.now();
+    bar();
+    ctx.stage.innerHTML = `<div class="spot-pair"><div><div class="tag">${t('picA')}</div>${renderScene(sc, 0)}</div><div><div class="tag">${t('picB')}</div>${renderScene(sc, 1)}</div></div>`;
+    ctx.stage.querySelectorAll('svg').forEach(svg => svg.addEventListener('pointerdown', onTap));
+    tick = every(() => { const el = $('#sp-time'); if (el) el.textContent = t('sec', Math.floor((performance.now() - t0) / 1000)); }, 500);
+  }
+  function svgs() { return [...ctx.stage.querySelectorAll('svg')]; }
+  function addMark(x, y, r, cls) {
+    svgs().forEach(s => s.querySelector('.marks').insertAdjacentHTML('beforeend', cls === 'mark-miss'
+      ? `<g class="mark-miss"><line x1="${x - 7}" y1="${y - 7}" x2="${x + 7}" y2="${y + 7}"/><line x1="${x + 7}" y1="${y - 7}" x2="${x - 7}" y2="${y + 7}"/></g>`
+      : `<circle class="${cls}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}"/>`));
+  }
+  function onTap(e) {
+    if (!playing) return;
+    e.preventDefault();
+    const svg = e.currentTarget, pt = svg.createSVGPoint();
+    pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    let best = null, bd = Infinity;
+    sc.diffs.forEach((d, i) => {
+      if (found.has(i)) return;
+      const dist = Math.hypot(d.x - p.x, d.y - p.y);
+      if (dist < Math.max(d.r, 12) && dist < bd) { bd = dist; best = i; }
+    });
+    if (best === null) {
+      // A tap on something already found is harmless.
+      if (sc.diffs.some((d, i) => found.has(i) && Math.hypot(d.x - p.x, d.y - p.y) < d.r)) return;
+      mistakes++; $('#sp-miss').textContent = mistakes; bad(); addMark(p.x, p.y, 0, 'mark-miss');
+      later(() => svgs().forEach(s => s.querySelectorAll('.mark-miss').forEach(m => m.remove())), 850);
+      return;
+    }
+    found.add(best); good();
+    const d = sc.diffs[best]; addMark(d.x, d.y, d.r, 'mark-found');
+    $('#sp-found').textContent = `${found.size}/${sc.diffs.length}`;
+    if (found.size === sc.diffs.length) finish();
+  }
+  function hint() {
+    if (!playing) return;
+    const left = sc.diffs.map((d, i) => i).filter(i => !found.has(i)); if (!left.length) return;
+    const d = sc.diffs[pick(left)]; hints++;
+    addMark(d.x, d.y, d.r * 1.25, 'mark-hint');
+    later(() => svgs().forEach(s => s.querySelectorAll('.mark-hint').forEach(m => m.remove())), 1700);
+  }
+  function reveal() {
+    if (!playing) return;
+    playing = false; stop(tick);
+    sc.diffs.forEach((d, i) => { if (!found.has(i)) addMark(d.x, d.y, d.r, 'mark-reveal'); });
+    result(ctx, t('foundOf', found.size, sc.diffs.length), t('dashedRest'), [[t('newPicture'), ready]]);
+  }
+  function finish() {
+    playing = false; stop(tick);
+    const s = Math.round((performance.now() - t0) / 1000);
+    logRound(); fanfare();
+    const up = hints === 0 && mistakes <= 3;
+    if (up) { L++; st.level = L; st.best = Math.max(st.best || 1, L); }
+    save();
+    result(ctx, t('allFound'), t('spotSummary', sc.diffs.length, s, mistakes, hints) +
+      (up ? t('spotUp', SPOT_LEVELS[Math.min(L, SPOT_LEVELS.length) - 1][2]) : t('spotStay')),
+      [[up ? t('nextPicture') : t('newPicture'), ready]]);
+  }
+  ready();
+}
+
+/* ================= 5. Search (Waldo style) ================= */
+const FAMILIES = [
+  ['🐱', '🐯', '🦁', '🐈', '🐅', '🐆'], ['🐶', '🦊', '🐺', '🐕', '🐩'], ['🐸', '🐢', '🦎', '🐊', '🐍'], ['🍎', '🍅', '🍒', '🍓', '🍑'],
+  ['🚗', '🚕', '🚙', '🚓', '🚌'], ['🐟', '🐠', '🐡', '🐬', '🐳'], ['🌻', '🌼', '🌸', '🌺', '🌷'], ['🐤', '🐥', '🐣', '🦆', '🐔'],
+  ['🍩', '🍪', '🥯', '🥨'], ['🐭', '🐹', '🐰', '🐨', '🐼'], ['⚽', '🏀', '🏐', '🎾', '⚾'], ['🍌', '🍋', '🌽', '🧀']
+];
+function searchLevel(L) {
+  return { n: Math.min(230, 24 + 16 * (L - 1)), like: Math.min(.75, .1 * (L - 1)), time: Math.max(60, 120 - 6 * (L - 1)), tilt: L >= 3 };
+}
+function search(ctx) {
+  const st = stat('search');
+  let L = st.level || 1, cfg, target, targetIdx, left, tick, playing, mistakes, tEnd;
+  ctx.controls.innerHTML = `<button class="btn" id="w-new">${t('newField')}</button><button class="btn" id="w-down">${t('easier')}</button>`;
+  $('#w-new').addEventListener('click', ready);
+  $('#w-down').addEventListener('click', () => { if (L > 1) { L--; st.level = L; save(); ready(); } });
+  function bar() {
+    pills(ctx.bar, [[t('timeLeft'), t('sec', cfg.time), 'w-time', true], [t('level'), L], [t('items'), cfg.n], [t('misses'), mistakes, 'w-miss'], [t('bestLevel'), st.best || 1]]);
+  }
+  function ready() {
+    if (tick) stop(tick);
+    ctx.msg.innerHTML = ''; playing = false; mistakes = 0; cfg = searchLevel(L);
+    const fam = pick(FAMILIES); target = pick(fam);
+    const alike = fam.filter(x => x !== target), others = FAMILIES.filter(f => f !== fam).flat();
+    const cols = Math.ceil(Math.sqrt(cfg.n * 4 / 3)), rows = Math.ceil(cfg.n / cols);
+    const slots = shuffle(Array.from({ length: cols * rows }, (_, i) => i)).slice(0, cfg.n);
+    targetIdx = rnd(cfg.n);
+    const cw = 100 / cols, chh = 100 / rows, fs = cw * (cfg.tilt ? rand(.62, .7) : .66);
+    const items = slots.map((slot, i) => {
+      const e = i === targetIdx ? target : (Math.random() < cfg.like && alike.length ? pick(alike) : pick(others));
+      const c = slot % cols, r = Math.floor(slot / cols);
+      const x = (c + .5) * cw + rand(-.18, .18) * cw, y = (r + .5) * chh + rand(-.18, .18) * chh;
+      const size = fs * (cfg.tilt ? rand(.8, 1.05) : 1);
+      const rot = cfg.tilt ? Math.round(rand(-35, 35)) : 0;
+      return `<span data-i="${i}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;font-size:${size.toFixed(2)}cqw;--r:${rot}deg">${e}</span>`;
+    });
+    bar();
+    ctx.stage.innerHTML = `<div class="target-card"><span class="t">${target}</span><span>${t('findThis')}<br><small>${t('exactlyOne')}</small></span></div>
+      <div class="field hide" id="w-field">${items.join('')}<div class="cover" id="w-cover"><div><p>${t('lookClosely')}</p><br><button class="btn primary" id="w-go">${t('start')}</button></div></div></div>`;
+    $('#w-go').addEventListener('click', begin);
+    $('#w-field').addEventListener('pointerdown', onTap);
+  }
+  function begin() {
+    $('#w-cover').remove(); $('#w-field').classList.remove('hide');
+    $('#w-field').scrollIntoView({ block: 'end', behavior: 'smooth' });
+    playing = true; tEnd = performance.now() + cfg.time * 1000;
+    tick = every(() => {
+      left = Math.max(0, Math.ceil((tEnd - performance.now()) / 1000));
+      const el = $('#w-time'); if (el) el.textContent = t('sec', left);
+      if (left <= 0) timeout();
+    }, 250);
+  }
+  function onTap(e) {
+    const s = e.target.closest('span[data-i]'); if (!s || !playing) return;
+    e.preventDefault();
+    if (+s.dataset.i === targetIdx) {
+      playing = false; stop(tick); s.classList.add('win'); fanfare(); logRound();
+      const used = Math.round(cfg.time - (tEnd - performance.now()) / 1000);
+      L++; st.level = L; st.best = Math.max(st.best || 1, L); save();
+      result(ctx, t('foundIt'), t('tookS', used), [[t('nextLevel'), ready]]);
+    } else {
+      mistakes++; $('#w-miss').textContent = mistakes; bad();
+      s.classList.remove('shake'); void s.offsetWidth; s.classList.add('shake');
+    }
+  }
+  function timeout() {
+    playing = false; stop(tick); bad(); logRound();
+    const s = $(`#w-field span[data-i="${targetIdx}"]`); if (s) s.classList.add('reveal');
+    if (L > 1) { L--; st.level = L; save(); }
+    result(ctx, t('timesUp'), t('redCircle'), [[t('tryAnother'), ready]]);
+  }
+  ready();
+}
+
+/* ================= Home ================= */
+const GAMES = {
+  schulte: { id: 'sch', play: schulte,
+    rec: () => { const b = stat('schulte').best || {}; const n = stat('schulte').size || 5; return [t('bestSize', n), b[n] ? secs(b[n]) : t('notYet')]; },
+    preview: () => `<div class="pv-grid" style="grid-template-columns:repeat(5,20px)">${[12, 7, 21, 3, 16, 9, 1, 24, 14, 5, 18, 11, 25, 2, 20, 6, 22, 8, 15, 10, 13, 4, 19, 23, 17].map(k => `<i class="${k === 1 ? 'on' : ''}">${k}</i>`).join('')}</div>` },
+  grid: { id: 'grid', play: memoryGrid,
+    rec: () => { const L = stat('grid').level || 1; const [s, c] = gridLevel(L); return [t('level') + ' ' + L, t('gridRec', s, c)]; },
+    preview: () => `<div class="pv-grid" style="grid-template-columns:repeat(4,20px)">${Array.from({ length: 16 }, (_, i) => `<i class="${[1, 6, 11, 12].includes(i) ? 'on' : ''}"></i>`).join('')}</div>` },
+  sequence: { id: 'seq', play: c => sequence(c, 'colors'),
+    rec: () => [t('best'), stat('seq').best ? t('inARow', stat('seq').best) : t('notYet')],
+    preview: () => `<div class="pv-row">🔵<span class="arr">→</span>🟨<span class="arr">→</span>🟥<span class="arr">→</span>🟢</div>` },
+  spot: { id: 'spot', play: spot,
+    rec: () => { const L = stat('spot').level || 1; return [t('level') + ' ' + L, t('diffs', SPOT_LEVELS[Math.min(L, SPOT_LEVELS.length) - 1][2])]; },
+    preview: () => { const f = x => `<svg viewBox="0 0 96 72"><rect width="96" height="72" fill="#8FD3F4"/><rect y="46" width="96" height="26" fill="#9CD67A"/><circle cx="18" cy="16" r="8" fill="#F5C518"/><rect x="52" y="30" width="26" height="22" fill="${x ? '#8B4FC4' : '#E0452B'}"/><polygon points="48,31 65,16 82,31" fill="#7A3B2E"/>${x ? '' : '<circle cx="30" cy="50" r="7" fill="#F07AB6"/>'}</svg>`; return `<div class="pv-spot">${f(0)}${f(1)}</div>`; } },
+  search: { id: 'search', play: search,
+    rec: () => { const L = stat('search').level || 1; return [t('level') + ' ' + L, t('itemsN', searchLevel(L).n)]; },
+    preview: () => `<div class="pv-scatter">${[['🐯', 14, 30], ['🍓', 30, 70], ['🚕', 48, 28], ['🐱', 64, 62], ['🌼', 82, 30], ['🐢', 88, 74], ['🍩', 8, 78], ['🐠', 36, 44], ['⚽', 72, 20], ['🦁', 54, 84]].map(([e, x, y]) => `<span style="left:${x}%;top:${y}%">${e}</span>`).join('')}</div>` },
+  hands: { id: 'hands', play: c => sequence(c, 'hands'),
+    rec: () => [t('best'), stat('hands').best ? t('inARow', stat('hands').best) : t('notYet')],
+    preview: () => `<div class="pv-row">✋<span class="arr">→</span>👍<span class="arr">→</span>✊<span class="arr">→</span>✌️</div>` }
+};
+function renderHome() {
+  $('#main').innerHTML = `<section class="hero"><h1>${t('heroTitle')}</h1><p>${t('heroText')}</p></section>
+    <div class="cards">${Object.entries(GAMES).map(([k, g]) => { const [a, b] = g.rec(); return `<a class="card" href="#${k}">
+      <div class="preview" aria-hidden="true">${g.preview()}</div>
+      <div><div class="skill">${t(g.id + 'Skill')}</div><h2>${t(g.id + 'Title')}</h2><p>${t(g.id + 'Blurb')}</p></div>
+      <div class="rec"><span>${esc(P().avatar)} ${a}</span><span>${b}</span></div></a>`; }).join('')}</div>
+    <p class="tip">${t('tip')}</p>`;
+}
+
+/* ================= Router ================= */
+function route() {
+  teardown();
+  const key = location.hash.slice(1), g = GAMES[key];
+  if (g) { const ctx = shell(g); g.play(ctx); document.title = t(g.id + 'Title') + ' · Focus Boost'; }
+  else { renderHome(); document.title = 'Focus Boost'; }
+}
+window.addEventListener('hashchange', () => { route(); window.scrollTo(0, 0); });
+renderWho();
+route();
+})();
+</script>
+
+</body>
+</html>
